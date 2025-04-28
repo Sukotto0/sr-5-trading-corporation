@@ -45,8 +45,8 @@ export default function RootLayout({
               <div className="flex-none">
                 <div className='flex gap-4'>
                   <ul className='menu menu-horizontal'>
-                    <li><SignInButton/></li>
-                    <li><SignUpButton/></li>
+                    <li><Link href="/sign-in">Sign In</Link></li>
+                    <li><Link href="/sign-up">Sign Up</Link></li>
                   </ul>
                 </div>
               </div>
