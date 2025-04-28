@@ -1,7 +1,7 @@
 export default async function Home() {
   return (
     <>
-      Test Edit
+      Like the copy paste thingies
     </>
   );
 }
