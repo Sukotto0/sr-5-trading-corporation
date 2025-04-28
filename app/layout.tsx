@@ -81,7 +81,7 @@ export default function RootLayout({
             </div> */}
                 <div className='flex gap-4'>
                   <ul className='menu menu-horizontal'>
-                    <li><Link href="/">Home</Link></li>
+                    <li><Link href="/dashboard">Home</Link></li>
                     <li><UserButton /></li>
                   </ul>
 
