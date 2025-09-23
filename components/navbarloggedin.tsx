@@ -22,9 +22,10 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { ChevronDownIcon, PhoneIcon, PlayCircleIcon } from '@heroicons/react/20/solid'
-import { SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
+import { SignInButton, SignOutButton, SignUpButton, UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
 import { TruckIcon, Wrench } from 'lucide-react'
+import Image from 'next/image'
 
 const products = [
   { name: 'Trucks', description: 'Get a better understanding of your traffic', href: '/browse/trucks', icon: TruckIcon },
@@ -39,11 +40,13 @@ export default function NavbarDefault() {
       <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
         <div className="flex lg:flex-1">
           <a href="/" className="-m-1.5 p-1.5">
-            <span className="sr-only">Your Company</span>
-            <img
+            <span className="sr-only">SR-5 Trading Corporation</span>
+            <Image
+            height={300}
+            width={300}
               alt=""
-              src="images/SR5TradingCorporation.png"
-              className="h-8 w-auto"
+              src="/images/SR5Minimal.png"
+              className="h-12 w-auto"
             />
           </a>
         </div>
@@ -93,17 +96,13 @@ export default function NavbarDefault() {
           <Link href="/schedule" className="text-sm/6 font-semibold text-white">
             Schedule a Visit
           </Link>
-
-          <SignInButton mode='modal'>
-            <div className="text-sm/6 font-semibold text-white hover:cursor-pointer">
-              Sign In
-            </div>
-          </SignInButton>
-          <SignUpButton mode='modal'>
-            <div className="text-sm/6 font-semibold text-white hover:cursor-pointer">
-              Sign Up
-            </div>
-          </SignUpButton>
+          <Link href="/cart" className="text-sm/6 font-semibold text-white">
+            Cart
+          </Link>
+          <Link href="/feedback" className="text-sm/6 font-semibold text-white">
+            Feedback
+          </Link>
+          <UserButton />
         </PopoverGroup>
       </nav>
       <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
@@ -154,19 +153,25 @@ export default function NavbarDefault() {
                 >
                   Schedule a Visit
                 </Link>
-
+                <Link
+                  href="/cart"
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-white hover:bg-white/5"
+                >
+                  Cart
+                </Link>
+                <Link
+                  href="/feedback"
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-white hover:bg-white/5"
+                >
+                  Feedback
+                </Link>
               </div>
               <div className="py-6">
-                <SignInButton mode='modal'>
+                <SignOutButton>
                   <div className="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white hover:bg-white/5">
-                    Sign In
+                    Sign Out
                   </div>
-                </SignInButton>
-                <SignUpButton mode='modal'>
-                  <div className="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white hover:bg-white/5">
-                    Sign Up
-                  </div>
-                </SignUpButton>
+                </SignOutButton>
               </div>
             </div>
           </div>

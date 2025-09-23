@@ -6,8 +6,9 @@ import {
 } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
-import NavbarDefault from '@/components/navbardefault'
 import Footer from '@/components/footer'
+import NavbarLoggedIn from '@/components/navbarloggedin'
+import NavbarDefault from '@/components/navbardefault'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,24 +34,17 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
+          {/* Navbar */}
           <SignedOut>
-            {/* Navbar */}
             <NavbarDefault />
-
-            {/* Main Content */}
-            <div className='grow w-full'>{children}</div>
-            {/* Footer */}
-            <Footer />
           </SignedOut>
           <SignedIn>
-            {/* Navbar */}
-            <NavbarDefault />
-
-            {/* Main Content */}
-            <div className='grow w-full'>{children}</div>
-            {/* Footer */}
-            <Footer />
+            <NavbarLoggedIn />
           </SignedIn>
+          {/* Main Content */}
+          <div className='grow w-full'>{children}</div>
+          {/* Footer */}
+          <Footer />
         </body>
       </html>
     </ClerkProvider>
