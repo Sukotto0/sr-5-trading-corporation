@@ -114,7 +114,7 @@ export default function NavbarDefault() {
               <span className="sr-only">SR-5 Trading Corporation</span>
               <img
                 alt=""
-                src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
+                src="/images/SR5Minimal.png"
                 className="h-8 w-auto"
               />
             </a>
