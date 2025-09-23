@@ -32,6 +32,7 @@ const Dashboard = () => {
           </div>
         </div>
 
+
         <div id="slide2" className="carousel-item relative w-full">
           <img
             src="https://img.daisyui.com/images/stock/photo-1609621838510-5ad474b7d25d.webp"
