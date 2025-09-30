@@ -16,6 +16,7 @@ import {
   ArrowPathIcon,
   Bars3Icon,
   ChartPieIcon,
+  CubeTransparentIcon,
   CursorArrowRaysIcon,
   FingerPrintIcon,
   SquaresPlusIcon,
@@ -24,11 +25,15 @@ import {
 import { ChevronDownIcon, PhoneIcon, PlayCircleIcon } from '@heroicons/react/20/solid'
 import { SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
-import { TruckIcon, Wrench } from 'lucide-react'
+import { Bolt, Cog, SparkleIcon, TruckIcon, Wrench } from 'lucide-react'
 
 const products = [
   { name: 'Trucks', description: 'Get a better understanding of your traffic', href: '/browse/trucks', icon: TruckIcon },
   { name: 'Equipment', description: 'Speak directly to your customers', href: '/browse/equipment', icon: Wrench },
+  { name: 'Units', description: 'Browse our selection of new and used units', href: '/browse/units', icon: Cog },
+  { name: 'Engine', description: 'Find the right engine for your needs', href: '/browse/engine', icon: Bolt },
+  { name: 'Services', description: 'Explore our maintenance and repair services', href: '/browse/services', icon: SparkleIcon },
+  { name: 'Parts & Accessories', description: 'Shop for genuine parts and accessories', href: '/browse/parts-accessories', icon: CubeTransparentIcon },
 ]
 
 export default function NavbarDefault() {
