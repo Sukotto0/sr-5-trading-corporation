@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogPanel,
@@ -11,172 +11,168 @@ import {
   PopoverButton,
   PopoverGroup,
   PopoverPanel,
-} from '@headlessui/react'
+} from "@headlessui/react";
 import {
-  ArrowPathIcon,
   Bars3Icon,
-  ChartPieIcon,
-  CubeTransparentIcon,
-  CursorArrowRaysIcon,
-  FingerPrintIcon,
-  SquaresPlusIcon,
   XMarkIcon,
-} from '@heroicons/react/24/outline'
-import { ChevronDownIcon, PhoneIcon, PlayCircleIcon } from '@heroicons/react/20/solid'
-import { SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
-import Link from 'next/link'
-import { Bolt, Cog, SparkleIcon, TruckIcon, Wrench } from 'lucide-react'
+  ChevronDownIcon,
+  CubeTransparentIcon,
+} from "@heroicons/react/24/outline";
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import Link from "next/link";
+import { Bolt, Cog, SparkleIcon, TruckIcon, Wrench } from "lucide-react";
 
 const products = [
-  { name: 'Trucks', description: 'Get a better understanding of your traffic', href: '/browse/trucks', icon: TruckIcon },
-  { name: 'Equipment', description: 'Speak directly to your customers', href: '/browse/equipment', icon: Wrench },
-  { name: 'Units', description: 'Browse our selection of new and used units', href: '/browse/units', icon: Cog },
-  { name: 'Engine', description: 'Find the right engine for your needs', href: '/browse/engine', icon: Bolt },
-  { name: 'Services', description: 'Explore our maintenance and repair services', href: '/browse/services', icon: SparkleIcon },
-  { name: 'Parts & Accessories', description: 'Shop for genuine parts and accessories', href: '/browse/parts-accessories', icon: CubeTransparentIcon },
-]
+  { name: "Trucks", href: "/browse/trucks", icon: TruckIcon },
+  { name: "Equipment", href: "/browse/equipment", icon: Wrench },
+  { name: "Units", href: "/browse/units", icon: Cog },
+  { name: "Engine", href: "/browse/engine", icon: Bolt },
+  { name: "Services", href: "/browse/services", icon: SparkleIcon },
+  { name: "Parts & Accessories", href: "/browse/parts-accessories", icon: CubeTransparentIcon },
+];
 
 export default function NavbarDefault() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [disclosureOpen, setDisclosureOpen] = useState(false);
+  const disclosureRef = useRef<HTMLDivElement>(null);
+
+  // Detect outside clicks ANYWHERE on the document
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        disclosureOpen &&
+        disclosureRef.current &&
+        !disclosureRef.current.contains(event.target as Node)
+      ) {
+        setDisclosureOpen(false);
+      }
+    }
+    function handleEsc(event: KeyboardEvent) {
+      if (event.key === "Escape") setDisclosureOpen(false);
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEsc);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [disclosureOpen]);
 
   return (
     <header className="bg-lime-600/55">
-      <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
+      <nav className="mx-auto flex max-w-11/12 items-center justify-between px-6 py-3 lg:px-8">
         <div className="flex lg:flex-1">
           <a href="/" className="-m-1.5 p-1.5">
-            <span className="sr-only">Your Company</span>
-            <img
-              alt=""
-              src="images/SR5TradingCorporation.png"
-              className="h-8 w-auto"
-            />
+            <img alt="" src="/images/SR5MoreMinimal.png" className="h-12 w-auto" />
           </a>
         </div>
         <div className="flex lg:hidden">
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-400"
+            className="-m-2.5 p-2.5 text-gray-400"
           >
-            <span className="sr-only">Open main menu</span>
-            <Bars3Icon aria-hidden="true" className="size-6" />
+            <Bars3Icon className="h-6 w-6" />
           </button>
         </div>
+
+        {/* Desktop Nav */}
         <PopoverGroup className="hidden lg:flex lg:gap-x-12">
           <Popover className="relative">
-            <PopoverButton className="flex items-center gap-x-1 text-sm/6 font-semibold text-white">
+            <PopoverButton className="flex items-center gap-x-1 text-sm font-semibold text-white">
               Browse
-              <ChevronDownIcon aria-hidden="true" className="size-5 flex-none text-gray-500" />
+              <ChevronDownIcon className="h-5 w-5 text-gray-300" />
             </PopoverButton>
-
-            <PopoverPanel
-              transition
-              className="absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 overflow-hidden rounded-3xl bg-gray-800 outline-1 -outline-offset-1 outline-white/10 transition data-closed:translate-y-1 data-closed:opacity-0 data-enter:duration-200 data-enter:ease-out data-leave:duration-150 data-leave:ease-in"
-            >
-              <div className="p-4">
-                {products.map((item) => (
-                  <div
-                    key={item.name}
-                    className="group relative flex items-center gap-x-6 rounded-lg p-4 text-sm/6 hover:bg-white/5"
-                  >
-                    <div className="flex size-11 flex-none items-center justify-center rounded-lg bg-gray-700/50 group-hover:bg-gray-700">
-                      <item.icon aria-hidden="true" className="size-6 text-gray-400 group-hover:text-white" />
-                    </div>
-                    <div className="flex-auto">
-                      <Link href={item.href} className="block font-semibold text-white">
-                        {item.name}
-                        <span className="absolute inset-0" />
-                      </Link>
-                      <p className="mt-1 text-gray-400">{item.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <PopoverPanel className="absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 rounded-3xl bg-gray-800 shadow-lg p-4">
+              {products.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="group flex items-center gap-x-4 rounded-lg p-3 hover:bg-white/5"
+                >
+                  <item.icon className="h-6 w-6 text-gray-400 group-hover:text-white" />
+                  <span className="font-semibold text-white">{item.name}</span>
+                </Link>
+              ))}
             </PopoverPanel>
           </Popover>
-
-          <Link href="/schedule" className="text-sm/6 font-semibold text-white">
-            Schedule a Visit
-          </Link>
-
-          <SignInButton mode='modal'>
-            <div className="text-sm/6 font-semibold text-white hover:cursor-pointer">
-              Sign In
-            </div>
+          <SignInButton mode="modal">
+            <div className="text-sm font-semibold text-white cursor-pointer">Schedule a Visit</div>
           </SignInButton>
-          <SignUpButton mode='modal'>
-            <div className="text-sm/6 font-semibold text-white hover:cursor-pointer">
-              Sign Up
-            </div>
+          <SignInButton mode="modal">
+            <div className="text-sm font-semibold text-white cursor-pointer">Sign In</div>
+          </SignInButton>
+          <SignUpButton mode="modal">
+            <div className="text-sm font-semibold text-white cursor-pointer">Sign Up</div>
           </SignUpButton>
         </PopoverGroup>
       </nav>
+
+      {/* Mobile Menu */}
       <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
         <div className="fixed inset-0 z-50" />
-        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-lime-900 p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-100/10">
+        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full sm:max-w-sm bg-lime-900 p-6 overflow-y-auto">
           <div className="flex items-center justify-between">
             <a href="/" className="-m-1.5 p-1.5">
-              <span className="sr-only">SR-5 Trading Corporation</span>
-              <img
-                alt=""
-                src="/images/SR5Minimal.png"
-                className="h-8 w-auto"
-              />
+              <img alt="" src="/images/SR5Minimal.png" className="h-8 w-auto" />
             </a>
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(false)}
-              className="-m-2.5 rounded-md p-2.5 text-gray-400"
-            >
-              <span className="sr-only">Close menu</span>
-              <XMarkIcon aria-hidden="true" className="size-6" />
+            <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-gray-400">
+              <XMarkIcon className="h-6 w-6" />
             </button>
           </div>
-          <div className="mt-6 flow-root">
-            <div className="-my-6 divide-y divide-white/10">
-              <div className="space-y-2 py-6">
-                <Disclosure as="div" className="-mx-3">
-                  <DisclosureButton className="group flex w-full items-center justify-between rounded-lg py-2 pr-3.5 pl-3 text-base/7 font-semibold text-white hover:bg-white/5">
-                    Browse Units
-                    <ChevronDownIcon aria-hidden="true" className="size-5 flex-none group-data-open:rotate-180" />
-                  </DisclosureButton>
-                  <DisclosurePanel className="mt-2 space-y-2">
-                    {[...products].map((item) => (
-                      <DisclosureButton
-                        key={item.name}
-                        as="a"
-                        href={item.href}
-                        className="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-white hover:bg-white/5"
-                      >
-                        {item.name}
-                      </DisclosureButton>
-                    ))}
-                  </DisclosurePanel>
-                </Disclosure>
-                <Link
-                  href="/schedule"
-                  className="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-white hover:bg-white/5"
-                >
-                  Schedule a Visit
-                </Link>
 
-              </div>
-              <div className="py-6">
-                <SignInButton mode='modal'>
-                  <div className="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white hover:bg-white/5">
-                    Sign In
-                  </div>
-                </SignInButton>
-                <SignUpButton mode='modal'>
-                  <div className="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white hover:bg-white/5">
-                    Sign Up
-                  </div>
-                </SignUpButton>
-              </div>
+          <div className="mt-6 space-y-4">
+            {/* Mobile Disclosure (controlled) */}
+            <div ref={disclosureRef}>
+              <Disclosure as="div" defaultOpen={false}>
+                {() => (
+                  <>
+                    <DisclosureButton
+                      onClick={() => setDisclosureOpen((prev) => !prev)}
+                      className="flex w-full justify-between rounded-lg py-2 px-3 text-white font-semibold hover:bg-white/5"
+                    >
+                      Browse Units
+                      <ChevronDownIcon className="h-5 w-5" />
+                    </DisclosureButton>
+                    {disclosureOpen && (
+                      <DisclosurePanel className="mt-2 space-y-2">
+                        {products.map((item) => (
+                          <Link
+                            key={item.name}
+                            href={item.href}
+                            onClick={() => setDisclosureOpen(false)}
+                            className="block rounded-lg py-2 pl-6 text-sm text-white hover:bg-white/5"
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
+                      </DisclosurePanel>
+                    )}
+                  </>
+                )}
+              </Disclosure>
             </div>
+
+            <SignInButton mode="modal">
+              <div className="block rounded-lg px-3 py-2 text-white font-semibold hover:bg-white/5">
+                Schedule a Visit
+              </div>
+            </SignInButton>
+            <SignInButton mode="modal">
+              <div className="block rounded-lg px-3 py-2 text-white font-semibold hover:bg-white/5">
+                Sign In
+              </div>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <div className="block rounded-lg px-3 py-2 text-white font-semibold hover:bg-white/5">
+                Sign Up
+              </div>
+            </SignUpButton>
           </div>
         </DialogPanel>
       </Dialog>
     </header>
-  )
+  );
 }

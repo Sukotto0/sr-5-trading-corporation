@@ -170,7 +170,7 @@ function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ')
 }
 
-export default function Trucks() {
+export default function parts-accessories() {
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
     return (
@@ -267,7 +267,7 @@ export default function Trucks() {
 
                 <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="relative z-10 flex items-baseline justify-between pt-24 pb-6 border-b border-gray-200">
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Browse "Trucks"</h1>
+                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">Browse "Parts & Accesories"</h1>
                         <div className="flex items-center">
                             <Menu as="div" className="relative inline-block text-left">
                                 <div className="flex items-center">
