@@ -1,3 +1,4 @@
+'use client'
 import { type Metadata } from "next";
 import { ClerkProvider, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -5,6 +6,7 @@ import "./globals.css";
 import Footer from "@/components/footer";
 import NavbarLoggedIn from "@/components/navbarloggedin";
 import NavbarDefault from "@/components/navbardefault";
+import { usePathname } from "next/navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,16 +18,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "SR-5 Trading Corporation",
-  description: "",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+
   return (
     <ClerkProvider>
       <html lang="en">
@@ -35,10 +34,10 @@ export default function RootLayout({
           {/* Navbar */}
           <div className="z-50">
             <SignedOut>
-              <NavbarDefault />
+              {!pathname.startsWith("/admin") && <NavbarDefault />}
             </SignedOut>
             <SignedIn>
-              <NavbarLoggedIn />
+              {!pathname.startsWith("/admin") && <NavbarLoggedIn />}
             </SignedIn>
           </div>
           {/* Main Content */}
