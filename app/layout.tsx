@@ -43,7 +43,7 @@ export default function RootLayout({
           {/* Main Content */}
           <div className="grow w-full">{children}</div>
           {/* Footer */}
-          <Footer />
+          {!pathname.startsWith("/admin") && <Footer />}
         </body>
       </html>
     </ClerkProvider>
