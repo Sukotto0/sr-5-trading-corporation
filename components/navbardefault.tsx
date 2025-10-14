@@ -98,6 +98,9 @@ export default function NavbarDefault() {
               ))}
             </PopoverPanel>
           </Popover>
+          <Link href="/services" className="text-sm font-semibold text-white">
+            Services
+          </Link>
           <SignInButton mode="modal" >
             <div className="text-sm font-semibold text-white cursor-pointer">Schedule a Visit</div>
           </SignInButton>

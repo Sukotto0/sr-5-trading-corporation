@@ -56,13 +56,14 @@ export default function AppointmentsPage() {
 
   return (
     <div className="w-11/12 mx-auto py-8 space-y-6">
-      <div className="text-center">
-        <h1 className="text-4xl font-extrabold mb-2">📆 My Appointments</h1>
-        <p className="text-gray-500">
-          View your scheduled tutoring and consultation sessions.
-        </p>
-      </div>
-
+      {/* Header */}
+      <header className="mb-8">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-extrabold text-gray-900">
+            Appointments
+          </h1>
+        </div>
+      </header>
       {/* Calendar */}
       <div className="bg-white p-6 rounded-2xl shadow-lg overflow-x-auto">
         <div className="h-[500px] sm:h-[600px] md:h-[700px]">
@@ -88,7 +89,8 @@ export default function AppointmentsPage() {
           <div className="bg-white rounded-2xl shadow-lg p-6 w-96 max-w-full">
             <h3 className="text-2xl font-bold mb-4">{selectedEvent.title}</h3>
             <p className="text-gray-600 mb-2">
-              <strong>From:</strong> {moment(selectedEvent.start).format("LLLL")}
+              <strong>From:</strong>{" "}
+              {moment(selectedEvent.start).format("LLLL")}
             </p>
             <p className="text-gray-600 mb-4">
               <strong>To:</strong> {moment(selectedEvent.end).format("LLLL")}

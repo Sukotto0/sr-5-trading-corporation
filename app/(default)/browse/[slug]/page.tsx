@@ -504,7 +504,7 @@ export default function Browse({
                   <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
                     {products.map((product) => (
                       <Link
-                      href={`/view/${product.id}`}
+                      href={(slug == "equipment" || slug == "parts-accessories") ? `/view/e/${product.id}` : `/view/v/${product.id}`}
                         key={product.id}
                         className="group relative border border-gray-200 rounded-lg overflow-hidden shadow-sm"
                       >

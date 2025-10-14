@@ -121,7 +121,7 @@ const KPICard = ({
             "text-white p-3 rounded-full shadow-lg"
           )}
         >
-          <Icon className="w-6 h-6" />
+          <Icon className="w-12 h-12 text-black/50" />
         </div>
         <div
           className={classNames(
@@ -151,18 +151,7 @@ const Sales = () => {
   );
 
   return (
-    <div className="bg-gray-100 p-8 min-h-screen">
-      {/* Top Header/Breadcrumb */}
-      <header className="flex justify-between items-center pb-6 border-b border-gray-200">
-        <h1 className="text-xl font-medium text-gray-900">SALES MANAGEMENT</h1>
-        <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-600 flex items-center cursor-pointer hover:text-indigo-600">
-            <ChevronDownIcon className="w-4 h-4 mr-1 text-gray-400" />
-            Hello! Master Admin
-          </div>
-        </div>
-      </header>
-
+    <div className="bg-white p-8 min-h-screen">
       {/* Time Display for Context */}
       <p className="text-sm text-gray-500 mt-2 mb-6">
         Current time: {currentTime}

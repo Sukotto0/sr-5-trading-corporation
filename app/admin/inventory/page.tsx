@@ -312,25 +312,14 @@ const Inventory = () => {
   // Main Content Area
 
   return (
-    <div className="flex flex-col bg-gray-100">
-      {/* Top Header/Breadcrumb */}
-      <header className="flex justify-between items-center pb-6 border-b border-gray-200">
-        <h1 className="text-xl font-medium text-gray-900">Manage Inventory</h1>
-        <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-600 flex items-center cursor-pointer hover:text-indigo-600">
-            <ChevronDownIcon className="w-4 h-4 mr-1 text-gray-400" />
-            Hello! Admin
-          </div>
-        </div>
-      </header>
-
+    <div className="flex flex-col bg-white">
       {/* Control Panel: Search and Add Button */}
       <div className="mt-6 mb-8 flex justify-between items-center">
         <div className="relative w-full max-w-sm">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by name or ID..."
+            placeholder="Search by name"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
@@ -338,7 +327,7 @@ const Inventory = () => {
         </div>
         <button
           onClick={handleOpenModal}
-          className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150"
+          className="flex items-center bg-red-800 hover:bg-red-900 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 hover:cursor-pointer"
         >
           <PlusIcon className="w-5 h-5 mr-2" />
           Add New Item

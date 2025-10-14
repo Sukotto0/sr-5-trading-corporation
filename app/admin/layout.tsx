@@ -1,22 +1,22 @@
-'use client'
-import { type Metadata } from "next";
-import { ClerkProvider, SignedIn, SignedOut } from "@clerk/nextjs";
-import { Geist, Geist_Mono } from "next/font/google";
-import Footer from "@/components/footer";
-import NavbarLoggedIn from "@/components/navbarloggedin";
-import NavbarDefault from "@/components/navbardefault";
+"use client";
 import { usePathname } from "next/navigation";
-import Sidebar from "./sidebar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { AppSidebar } from "@/components/app-sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { useState } from "react";
 
 export default function RootLayout({
   children,
@@ -24,14 +24,39 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const pathArray = pathname.split("/").filter(Boolean);
+  const [open, setOpen] = useState(false);
+
 
   return (
-    <div className="min-h-screen bg-gray-100">
-            <Sidebar />
-
-            <div className="ml-64 p-8">
-                {children}
-            </div>
-        </div>
+    <SidebarProvider open={open} onOpenChange={setOpen}>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbPage className="capitalize">
+                    {pathArray[1]}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+                {pathArray.length > 2 && (
+                  <>
+                    <BreadcrumbSeparator className="hidden md:block" />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>{pathArray[2]}</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </>
+                )}
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

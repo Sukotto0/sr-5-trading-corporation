@@ -80,17 +80,6 @@ const AdminDashboard = () => {
     // Main Content Area
     return (
         <>
-            {/* Top Header/Breadcrumb */}
-            <header className="flex justify-between items-center pb-6 border-b border-gray-200">
-                <h1 className="text-xl font-medium text-gray-900">Dashboard</h1>
-                <div className="flex items-center space-x-4">
-                    <div className="text-sm text-gray-600 flex items-center cursor-pointer hover:text-indigo-600">
-                        <ChevronDownIcon className="w-4 h-4 mr-1 text-gray-400" />
-                        Hello! Admin
-                    </div>
-                </div>
-            </header>
-
             {/* Welcome Banner */}
             <div className="mt-6 mb-8 p-6 bg-white rounded-xl shadow-md border-l-4 border-red-950">
                 <h2 className="text-2xl font-bold text-gray-900">

@@ -13,7 +13,7 @@ const isLoggedInRoute = createRouteMatcher([
 ])
 
 const isAdminRoute = createRouteMatcher([
-  "/admin(.*)"
+  "/admin/(.*)"
 ])
 
 export default clerkMiddleware(async (auth, req) => {
