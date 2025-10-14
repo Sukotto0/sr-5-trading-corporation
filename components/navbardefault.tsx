@@ -85,15 +85,15 @@ export default function NavbarDefault() {
               Browse
               <ChevronDownIcon className="h-5 w-5 text-gray-300" />
             </PopoverButton>
-            <PopoverPanel className="absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 rounded-3xl bg-gray-800 shadow-lg p-4">
+            <PopoverPanel className="absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 rounded-3xl bg-white shadow-lg p-4">
               {products.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
                   className="group flex items-center gap-x-4 rounded-lg p-3 hover:bg-white/5"
                 >
-                  <item.icon className="h-6 w-6 text-gray-400 group-hover:text-white" />
-                  <span className="font-semibold text-white">{item.name}</span>
+                  <item.icon className="h-6 w-6 text-green-800 group-hover:text-black/50" />
+                  <span className="font-semibold text-black/80 group-hover:text-black/50">{item.name}</span>
                 </Link>
               ))}
             </PopoverPanel>
