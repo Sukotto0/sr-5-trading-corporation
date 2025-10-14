@@ -119,7 +119,7 @@ const Dashboard = () => {
   return (
     <div className="w-full flex flex-col items-center justify-center">
       {/* Hero Carousel */}
-      <div className="relative w-full h-[70vh]">
+      <div className="relative w-full h-[70vh] mb-10">
         <Carousel
           opts={{ loop: true }}
           plugins={[autoplayPlugin.current]}
@@ -180,7 +180,7 @@ const Dashboard = () => {
       </div>
 
       {/* Location */}
-      <div className="w-full max-w-5xl px-6 py-16">
+      {/* <div className="w-full max-w-5xl px-6 py-16">
         <h1 className="text-4xl font-extrabold text-center mb-8">
           {location.title}
         </h1>
@@ -192,7 +192,7 @@ const Dashboard = () => {
             loading="lazy"
           ></iframe>
         </div>
-      </div>
+      </div> */}
 
       {/* FAQ */}
       <div className="w-full max-w-5xl px-6 py-16">

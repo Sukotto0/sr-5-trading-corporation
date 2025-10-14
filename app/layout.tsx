@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import { type Metadata } from "next";
 import { ClerkProvider, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -7,6 +7,7 @@ import Footer from "@/components/footer";
 import NavbarLoggedIn from "@/components/navbarloggedin";
 import NavbarDefault from "@/components/navbardefault";
 import { usePathname } from "next/navigation";
+import QueryProviders from "@/components/providers/QueryProviders";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +27,13 @@ export default function RootLayout({
   const pathname = usePathname();
 
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        layout: {
+          unsafe_disableDevelopmentModeWarnings: true,
+        },
+      }}
+    >
       <html lang="en">
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
@@ -41,7 +48,9 @@ export default function RootLayout({
             </SignedIn>
           </div>
           {/* Main Content */}
-          <div className="grow w-full">{children}</div>
+          <QueryProviders>
+            <div className="grow w-full">{children}</div>
+          </QueryProviders>
           {/* Footer */}
           {!pathname.startsWith("/admin") && <Footer />}
         </body>

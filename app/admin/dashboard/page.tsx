@@ -1,22 +1,10 @@
 "use client"
 import React, { useState } from 'react';
 import {
-    HomeIcon,
-    CalendarIcon,
-    UsersIcon,
-    MapIcon,
-    DocumentChartBarIcon,
-    Cog8ToothIcon,
-    ArrowLeftOnRectangleIcon,
     ArrowRightIcon,
     ArrowLeftIcon,
     ChevronDownIcon,
-    UserCircleIcon,
-    EyeIcon,
 } from '@heroicons/react/24/outline';
-import Image from 'next/image';
-import { ChartAreaIcon, ShoppingBasket } from 'lucide-react';
-import Sidebar from '../sidebar';
 
 const calendarDays = [
     // Sun, Mon, Tue, Wed, Thu, Fri, Sat
@@ -31,7 +19,7 @@ const calendarDays = [
 
 // --- Helper Functions ---
 
-function classNames(...classes) {
+function classNames(...classes: any) {
     return classes.filter(Boolean).join(' ')
 }
 
@@ -43,7 +31,7 @@ const AdminDashboard = () => {
     const [currentTime] = useState('7:18:42 PM PHT');
 
     // Calendar Header Component
-    const CalendarHeader = ({ month }) => (
+    const CalendarHeader = ({ month }: any) => (
         <div className="flex justify-between items-center text-white font-bold text-xl h-16 px-4">
             <button className="p-1 rounded-full hover:bg-green-700/50 transition-colors">
                 <ArrowLeftIcon className="w-5 h-5" />
@@ -59,12 +47,12 @@ const AdminDashboard = () => {
     );
 
     // Calendar Body Component
-    const CalendarBody = ({ days }) => (
+    const CalendarBody = ({ days }: any) => (
         <div className="grid grid-cols-7 text-white text-center text-sm font-medium pt-2">
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
                 <div key={day} className="py-2 text-white/80 font-normal">{day}</div>
             ))}
-            {days.flat().map((date, index) => {
+            {days.flat().map((date: any, index: number) => {
                 // Logic derived from the visual cue in the screenshot
                 const isCurrentMonth = index >= 5 && index < 35;
                 const isSelected = isCurrentMonth && date === 30; // 30th is selected (highlighted blue)
@@ -94,7 +82,7 @@ const AdminDashboard = () => {
         <>
             {/* Top Header/Breadcrumb */}
             <header className="flex justify-between items-center pb-6 border-b border-gray-200">
-                <h1 className="text-xl font-medium text-gray-900">DASHBOARD</h1>
+                <h1 className="text-xl font-medium text-gray-900">Dashboard</h1>
                 <div className="flex items-center space-x-4">
                     <div className="text-sm text-gray-600 flex items-center cursor-pointer hover:text-indigo-600">
                         <ChevronDownIcon className="w-4 h-4 mr-1 text-gray-400" />
