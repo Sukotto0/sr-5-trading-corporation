@@ -7,6 +7,7 @@ import {
   CogIcon,
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
 // Data structure for the services offered
 const serviceOfferings = [
@@ -62,6 +63,32 @@ const serviceOfferings = [
     ],
     color: "text-amber-600",
   },
+  {
+    name: "Custom Fabrication & Weldig",
+    icon: WrenchIcon,
+    description:
+      "Need custom modifications or structural repairs? Our specialized welding and fabrication shop delivers reliable, durable solutions.",
+    benefits: [
+      "Trailer Repair",
+      "Chassis Modifications",
+      "Custom Hydraulics",
+      "Fleet Body Repair",
+    ],
+    color: "text-amber-600",
+  },
+  {
+    name: "Custom Fabrication & Weling",
+    icon: WrenchIcon,
+    description:
+      "Need custom modifications or structural repairs? Our specialized welding and fabrication shop delivers reliable, durable solutions.",
+    benefits: [
+      "Trailer Repair",
+      "Chassis Modifications",
+      "Custom Hydraulics",
+      "Fleet Body Repair",
+    ],
+    color: "text-amber-600",
+  }
 ];
 
 export default function App() {
@@ -84,7 +111,7 @@ export default function App() {
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {serviceOfferings.map((service) => (
             <div
               key={service.name}
@@ -137,8 +164,8 @@ export default function App() {
             for your equipment.
           </p>
           <div className="mt-8 flex justify-center">
-            <a
-              href="#"
+            <Link
+              href="/schedule"
               className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-red-900 bg-white hover:bg-indigo-50 duration-200 transform hover:scale-105 transition-all"
             >
               Request an Appointment
@@ -146,7 +173,7 @@ export default function App() {
                 className="ml-3 -mr-1 h-5 w-5"
                 aria-hidden="true"
               />
-            </a>
+            </Link>
           </div>
         </div>
       </div>

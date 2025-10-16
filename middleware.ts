@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server';
 
 const isPublicRoute = createRouteMatcher([
   '/',
-  '/browse/(.*)'
+  '/browse/(.*)',
+  '/testing'
 ])
 
 const isLoggedInRoute = createRouteMatcher([
