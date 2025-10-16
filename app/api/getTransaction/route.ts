@@ -3,6 +3,11 @@ import { ObjectId } from "mongodb";
 
 import { NextResponse } from "next/server";
 
+type Transaction = {
+  _id: string;
+  [key: string]: any;
+};
+
 export async function GET(req: Request) {
   try {
     const client = await clientPromise;
@@ -10,7 +15,9 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const transactionId = url.searchParams.get("id");
     if (transactionId) {
-      const data = await db.collection("transactions").findOne({ _id: transactionId });
+      const data = await db
+        .collection<Transaction>("transactions")
+        .findOne({ _id: transactionId });
       return NextResponse.json({ success: true, data });
     } else {
       return NextResponse.json({
