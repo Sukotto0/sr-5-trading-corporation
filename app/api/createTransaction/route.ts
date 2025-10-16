@@ -1,4 +1,6 @@
 import paymaya from "@api/paymaya";
+import clientPromise from "@/lib/mongodb";
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const {
@@ -6,18 +8,19 @@ export async function POST(request: Request) {
     lastName,
     email,
     phone,
-    preferredDate,
-    preferredTime,
     productName,
     productId,
+    reservationFee,
+    referenceNumber,
     productPrice,
+    appointment,
   } = await request.json();
 
   paymaya.auth(process.env.MAYA_PUBLIC_KEY!, process.env.MAYA_SECRET_KEY!);
   const response = await paymaya.createV1Checkout({
     totalAmount: {
       currency: "PHP",
-      value: productPrice,
+      value: reservationFee,
     },
     buyer: {
       firstName: firstName,
@@ -28,22 +31,50 @@ export async function POST(request: Request) {
       {
         name: productName,
         code: productId,
-        description: "Shoes",
         quantity: "1",
-        amount: { value: productPrice },
-        totalAmount: { value: productPrice },
+        amount: { value: reservationFee },
+        totalAmount: { value: reservationFee, currency: "PHP" },
       },
     ],
     redirectUrl: {
-      success:
-        "https://www.merchantsite.com/success?id=5fc10b93-bdbd-4f31-b31d-4575a3785009",
-      failure:
-        "https://www.mechantsite.com/failure?id=5fc10b93-bdbd-4f31-b31d-4575a3785009",
-      cancel:
-        "https://www.merchantsite.com/cancel?id=5fc10b93-bdbd-4f31-b31d-4575a3785009",
+      success: `https://www.sr5tradingcorp.com/payments/success?id=${referenceNumber}`,
+      failure: `https://www.sr5tradingcorp.com/payments/failed?id=${referenceNumber}`,
+      cancel: `https://www.sr5tradingcorp.com/payments/cancelled?id=${referenceNumber}`,
     },
-    requestReferenceNumber: "5fc10b93-bdbd-4f31-b31d-4575a3785009",
+    requestReferenceNumber: referenceNumber,
   });
+
+  const paymentDetails = await response.data
+
+  try {
+    const client = await clientPromise;
+    const db = client.db("main");
+
+    // Add timestamps to the item data
+    const itemWithTimestamps = {
+      _id: referenceNumber,
+      firstName,
+      lastName,
+      email,
+      phone,
+      productName,
+      productId,
+      reservationFee,
+      productPrice,
+      appointment,
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      status: "pending",
+      paymentId: paymentDetails.checkoutId,
+    };
+
+    const data = await db
+      .collection("transactions")
+      .insertOne(itemWithTimestamps);
+  } catch (error) {
+    console.error("Error saving item:", error);
+    return NextResponse.json({ error: "Failed to save item" }, { status: 500 });
+  }
 
   return new Response(JSON.stringify(response), { status: 200 });
 }

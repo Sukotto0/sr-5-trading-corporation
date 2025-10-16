@@ -18,8 +18,9 @@ export interface Product {
   id: number | string;
   name: string;
   imageUrl: string;
-  price: string | number;
+  price: number;
   description: string;
+  quantity: number;
   category: string;
   location: string;
   createdAt?: string;

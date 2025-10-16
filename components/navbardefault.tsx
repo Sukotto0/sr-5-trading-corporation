@@ -157,7 +157,7 @@ export default function NavbarDefault() {
               </Disclosure>
             </div>
 
-            <SignInButton mode="modal">
+            <SignInButton mode="modal" forceRedirectUrl={"/schedule"}>
               <div className="block rounded-lg px-3 py-2 text-white font-semibold hover:bg-white/5">
                 Schedule a Visit
               </div>

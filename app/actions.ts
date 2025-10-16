@@ -119,18 +119,21 @@ export const uploadImageToBlob = async (file: File): Promise<string> => {
   }
 };
 
-export async function createTransaction(formData: FormData) {
-  console.log("Creating transaction...");
+export async function createReservation(formData: FormData) {
+  console.log("Creating reservation...");
 
   const firstName = formData.get("firstName");
   const lastName = formData.get("lastName");
   const email = formData.get("email");
   const phone = formData.get("phone");
-  const preferredDate = formData.get("preferredDate");
-  const preferredTime = formData.get("preferredTime");
-  const productName = formData.get("productName");
+  const appointment = formData.get("appointment");
+  const productName = "Reservation Fee: " + formData.get("productName");
   const productId = formData.get("productId");
   const productPrice = formData.get("productPrice");
+  const reservationFee = formData.get("reservationFee");
+  const userId = formData.get("userId");
+
+  const referenceNumber = `SR5-${firstName?.slice(0, 1)}${lastName?.slice(0, 1)}-${Date.now()}`;
 
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_BASE_URL}/api/createTransaction`,
@@ -144,11 +147,12 @@ export async function createTransaction(formData: FormData) {
         lastName,
         email,
         phone,
-        preferredDate,
-        preferredTime,
         productName,
         productId,
+        reservationFee,
+        referenceNumber,
         productPrice,
+        appointment,
       }),
     }
   );
@@ -159,4 +163,16 @@ export async function createTransaction(formData: FormData) {
   }
 
   return data.data;
+}
+
+export async function getTransaction(id: string) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/getTransaction?id=${id}`,
+    { method: "GET" }
+  );
+
+  const data = await response.json();
+  if (data.success) {
+    return data;
+  }
 }
