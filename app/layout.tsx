@@ -1,6 +1,5 @@
 "use client";
-import { type Metadata } from "next";
-import { ClerkProvider, SignedIn, SignedOut } from "@clerk/nextjs";
+import { ClerkProvider, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/footer";
@@ -8,6 +7,7 @@ import NavbarLoggedIn from "@/components/navbarloggedin";
 import NavbarDefault from "@/components/navbardefault";
 import { usePathname } from "next/navigation";
 import QueryProviders from "@/components/providers/QueryProviders";
+import { useState } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,6 +24,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [initialLoad, setInitialLoad] = useState(true);
   const pathname = usePathname();
 
   return (

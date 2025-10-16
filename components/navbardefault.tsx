@@ -27,7 +27,6 @@ const products = [
   { name: "Equipment", href: "/browse/equipment", icon: Wrench },
   { name: "Units", href: "/browse/units", icon: Cog },
   { name: "Engine", href: "/browse/engine", icon: Bolt },
-  { name: "Services", href: "/browse/services", icon: SparkleIcon },
   { name: "Parts & Accessories", href: "/browse/parts-accessories", icon: CubeTransparentIcon },
 ];
 
@@ -158,7 +157,7 @@ export default function NavbarDefault() {
               </Disclosure>
             </div>
 
-            <SignInButton mode="modal">
+            <SignInButton mode="modal" forceRedirectUrl={"/schedule"}>
               <div className="block rounded-lg px-3 py-2 text-white font-semibold hover:bg-white/5">
                 Schedule a Visit
               </div>

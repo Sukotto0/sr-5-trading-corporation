@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import {
   TruckIcon,
@@ -7,64 +8,114 @@ import {
   CogIcon,
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import {
+  AirVent,
+  Lock,
+  PaintbrushIcon,
+  ScissorsLineDashed,
+} from "lucide-react";
+import { SignInButton, useUser } from "@clerk/nextjs";
 
 // Data structure for the services offered
 const serviceOfferings = [
   {
-    name: "Preventive Maintenance",
-    icon: SparklesIcon,
+    name: "TEST DRIVE A VEHICLE",
+    icon: TruckIcon,
     description:
-      "Keep your fleet running smoothly with scheduled inspections, fluid changes, and tune-ups. Maximizing uptime is our priority.",
-    benefits: [
-      "Oil & Filter Changes",
-      "Brake System Service",
-      "Seasonal Check-ups",
-      "DOT Compliance Inspections",
-    ],
-    color: "text-indigo-600",
+      "Experience performance firsthand with our available test drive units. Get a feel for handling, comfort, and reliability before making your decision.",
+    benefits: ["Trucks", "Tractors", "Vans", "Other Units"],
+    color: "text-red-950",
   },
   {
-    name: "Engine & Drivetrain Repair",
+    name: "UPHOLSTERY",
+    icon: ScissorsLineDashed,
+    description:
+      "Transform your vehicle’s interior with professional upholstery repair and customization. We specialize in comfort, aesthetics, and long-lasting craftsmanship.",
+    benefits: [
+      "Minor and Major Repairs of unit Upholstery",
+      "Custom made Upholstery",
+      "Additional bucket seat installation",
+    ],
+    color: "text-red-950",
+  },
+  {
+    name: "AIRCONDITIONING",
+    icon: AirVent,
+    description:
+      "Stay cool and comfortable on the road. We provide expert repair, replacement, and maintenance services for automotive air conditioning systems.",
+    benefits: [
+      "Repair and Replacement services",
+      "Recharging or Refilling the refrigerant (Freon)",
+      "Car AC Installation",
+    ],
+    color: "text-red-950",
+  },
+  {
+    name: "TINSMITH SERVICES",
     icon: BoltIcon,
     description:
-      "From minor adjustments to complete overhauls, our certified technicians handle all gasoline and diesel engine repairs quickly and reliably.",
+      "High-quality metalwork and body customization for vehicles of all kinds. We handle everything from body dent repairs to full custom fabrication with precision and durability.",
     benefits: [
-      "Full Engine Diagnostics",
-      "Transmission Repair/Replacement",
-      "Differential Service",
-      "Engine Tuning & Optimization",
+      "Food Truck Body Customization/Fabrication",
+      "Bullbar customization (Rear/Front)",
+      "Canopy Fabrication",
+      "Minor and Major Body Dent repairs",
+      "Body Alignment",
+      "Chassis Repairs",
     ],
-    color: "text-rose-600",
+    color: "text-red-950",
   },
   {
-    name: "Advanced Diagnostics",
-    icon: CogIcon,
+    name: "PAINTING SERVICES",
+    icon: PaintbrushIcon,
     description:
-      "Using cutting-edge software, we accurately pinpoint electrical, emission, and performance issues, saving you time and costly guesswork.",
+      "Enhance and protect your vehicle’s appearance with our professional auto painting services — from minor touch-ups to full color transformations.",
     benefits: [
-      "Check Engine Light Troubleshooting",
-      "Electrical System Repair",
-      "Computer Programming",
-      "ABS/SRS System Service",
+      "PARTIAL Body Repainting & Repair",
+      "Full car Repaint (Washover) & Full Car Change Color",
+      "Underchassis Repaint",
+      "Underchassis Rubberizing",
+      "RE-Buffing",
+      "Mags Painting",
+      "Paint Restoration",
     ],
-    color: "text-green-600",
+    color: "text-red-950",
   },
   {
-    name: "Custom Fabrication & Welding",
+    name: "MECHANIC SERVICES",
     icon: WrenchIcon,
     description:
-      "Need custom modifications or structural repairs? Our specialized welding and fabrication shop delivers reliable, durable solutions.",
+      "Comprehensive mechanical care for all vehicle types — from regular maintenance to complete engine overhauls. Our expert mechanics ensure your vehicle performs at its best.",
     benefits: [
-      "Trailer Repair",
-      "Chassis Modifications",
-      "Custom Hydraulics",
-      "Fleet Body Repair",
+      "Minor and Major Car Repairs and Reconditioning",
+      "Change oil",
+      "Brake service",
+      "Air filter replacement",
+      "Wheel Alignment",
+      "Top Overhaul",
+      "Complete Engine Overhaul",
+      "Engine Repair",
+      "Engine Replacement",
+      "Ignition System repair and maintenance",
+      "Fuel Injection Service & Repair",
+      "Transmission Replacement / Repair",
+      "Timing Belt Replacement",
+      "Belt and Hose Replacement",
+      "Lifting",
+      "Parts replacement",
+      "Installation of accessories",
+      "Underchassis Repairs",
+      "Suspension and Steering",
+      "Unit Scanning and Diagnostics",
     ],
-    color: "text-amber-600",
+    color: "text-red-950",
   },
 ];
 
 export default function App() {
+  const { isSignedIn } = useUser();
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-24">
@@ -84,7 +135,7 @@ export default function App() {
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {serviceOfferings.map((service) => (
             <div
               key={service.name}
@@ -137,16 +188,25 @@ export default function App() {
             for your equipment.
           </p>
           <div className="mt-8 flex justify-center">
-            <a
-              href="#"
-              className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-red-900 bg-white hover:bg-indigo-50 duration-200 transform hover:scale-105 transition-all"
-            >
-              Request an Appointment
-              <ArrowRightIcon
-                className="ml-3 -mr-1 h-5 w-5"
-                aria-hidden="true"
-              />
-            </a>
+            {isSignedIn ? (
+              <Link
+                href="/schedule"
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-red-900 bg-white hover:bg-indigo-50 duration-200 transform hover:scale-105 transition-all"
+              >
+                Request an Appointment
+                <ArrowRightIcon
+                  className="ml-3 -mr-1 h-5 w-5"
+                  aria-hidden="true"
+                />
+              </Link>
+            ) : (
+              <SignInButton mode="modal" forceRedirectUrl={"/schedule"}>
+                <p className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-red-900 bg-white hover:bg-indigo-50 duration-200 transform hover:scale-105 transition-all">
+                    <Lock className="mr-2 h-5 w-5" aria-hidden="true" />
+                    Sign In to Request an Appointment
+                  </p>
+              </SignInButton>
+            )}
           </div>
         </div>
       </div>

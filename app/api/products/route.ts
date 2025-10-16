@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
       name: item.name || "Unnamed Product",
       imageUrl: item.imageUrl || "/images/placeholder.jpg",
       imageAlt: item.name || "Product image",
+      quantity: item.quantity || 0,
       price: item.price || 0, // Return the numeric price directly from database
       description: item.description || "No description available",
       category: item.category || "general", 

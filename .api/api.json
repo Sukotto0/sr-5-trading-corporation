@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "apis": [
+    {
+      "identifier": "paymaya",
+      "source": "@paymaya/v8.00#1bmd73pl9p4h9zf",
+      "integrity": "sha512-mC6j+Us/a6HS7m6Q/QDBpNm7JV5QFgFXqyu2700XW9Y3iMJDAixmJLedwX//OL3Fhoseyxg3FKpvRdX+gfjcrQ==",
+      "installerVersion": "6.1.3"
+    }
+  ]
+}

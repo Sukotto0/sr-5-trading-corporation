@@ -261,7 +261,7 @@ const Dashboard = () => {
               Purok 1 Malabog Maharlika Highway Daraga Albay 4501
             </p>
             <h3 className="text-lg font-semibold mb-1 text-gray-800">
-              Camalig Branch
+              Main Branch
             </h3>
             <p className="text-gray-600 text-center">
               Purok 1 Barangay Ilawod Maharlika Highway Camalig Albay 4502
