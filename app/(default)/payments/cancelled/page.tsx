@@ -51,15 +51,6 @@ const CancelledPayments = () => {
         
         
     }, [searchParams])
-    
-    // Format date for display
-    // const formattedDate = transactionData.updatedAt.toLocaleDateString('en-US', {
-    //     year: 'numeric',
-    //     month: 'long',
-    //     day: 'numeric',
-    //     hour: '2-digit',
-    //     minute: '2-digit',
-    // });
 
     const handleGoHome = () => {
         console.log("Navigating to the home page...");
