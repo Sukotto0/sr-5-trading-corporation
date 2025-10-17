@@ -13,18 +13,15 @@ export async function GET(req: Request) {
     const client = await clientPromise;
     const db = client.db("main");
     const url = new URL(req.url);
-    const transactionId = url.searchParams.get("id");
-    const paymentStatus = url.searchParams.get("type");
+    const userId = url.searchParams.get("userId");
 
-    if (transactionId) {
-      await db.collection<Transaction>("transactions").updateOne(
-        { _id: transactionId },
-        { $set: { status: paymentStatus || "unknown" } }
-      );
-
+    if (userId) {
       const data = await db
         .collection<Transaction>("transactions")
-        .findOne({ _id: transactionId });
+        .find({ userId })
+        .toArray();
+
+        console.log("Transactions for user:", data);
       return NextResponse.json({ success: true, data });
     } else {
       return NextResponse.json({

@@ -111,6 +111,9 @@ export default function NavbarDefault() {
           <Link href="/services" className="text-sm font-semibold text-white">
             Services
           </Link>
+          <Link href="/transactions" className="text-sm font-semibold text-white">
+            Transactions
+          </Link>
           <Link href="/feedback" className="text-sm font-semibold text-white">
             Feedback
           </Link>
