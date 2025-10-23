@@ -112,7 +112,10 @@ const Inventory = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "quantity" ? parseInt(value) || 0 : value,
+      [name]:
+        name === "quantity" || name === "price"
+          ? parseFloat(value) || 0
+          : value,
     }));
   };
 
@@ -413,7 +416,7 @@ const Inventory = () => {
                       {item.location}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {item.lastUpdated}
+                      {new Date(item.lastUpdated).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                       <button
@@ -500,6 +503,7 @@ const Inventory = () => {
                   name="price"
                   value={formData.price}
                   onChange={handleInputChange}
+                  min={0}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="Enter item price"

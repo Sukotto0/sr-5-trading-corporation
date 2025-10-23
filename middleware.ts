@@ -10,7 +10,8 @@ const isPublicRoute = createRouteMatcher([
 const isLoggedInRoute = createRouteMatcher([
   "/cart(.*)",
   "/feedback",
-  "/schedule(.*)"
+  "/schedule(.*)",
+  "/transactions(.*)",
 ])
 
 const isAdminRoute = createRouteMatcher([

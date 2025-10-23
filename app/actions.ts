@@ -130,7 +130,7 @@ export async function createReservation(formData: FormData) {
   const productName = "Reservation Fee: " + formData.get("productName");
   const productId = formData.get("productId");
   const productPrice = formData.get("productPrice");
-  const reservationFee = formData.get("reservationFee");
+  const toPay = formData.get("reservationFee");
   const userId = formData.get("userId");
 
   const referenceNumber = `SR5-${firstName?.slice(0, 1)}${lastName?.slice(0, 1)}-${Date.now()}`;
@@ -149,10 +149,11 @@ export async function createReservation(formData: FormData) {
         phone,
         productName,
         productId,
-        reservationFee,
+        toPay,
         referenceNumber,
         productPrice,
         appointment,
+        userId
       }),
     }
   );
@@ -165,9 +166,10 @@ export async function createReservation(formData: FormData) {
   return data.data;
 }
 
-export async function getTransaction(id: string) {
+// TODO: move type status to get official status on transaction
+export async function getTransaction(id: string, type?: string) {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/getTransaction?id=${id}`,
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/getTransaction?id=${id}&type=${type}`,
     { method: "GET" }
   );
 
@@ -175,4 +177,58 @@ export async function getTransaction(id: string) {
   if (data.success) {
     return data;
   }
+}
+
+export async function getTransactionsByUser(userId: string) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/getTransactionsByUser?userId=${userId}`,
+    { method: "GET" }
+  );
+
+  const data = await response.json();
+  if (data.success) {
+    return data.data;
+  }
+}
+
+export async function getServices(){
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/getServices`,
+    { method: "GET" }
+  );
+
+  const data = await response.json();
+  if (data.success) {
+    return data;
+  }
+}
+
+export async function createAppointment(data: any) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/createAppointment`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  return response.json();
+}
+
+export async function createFeedback(data: any) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/createFeedback`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  return response.json();
 }

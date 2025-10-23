@@ -14,7 +14,14 @@ export async function GET(req: Request) {
     const db = client.db("main");
     const url = new URL(req.url);
     const transactionId = url.searchParams.get("id");
+    const paymentStatus = url.searchParams.get("type");
+
     if (transactionId) {
+      await db.collection<Transaction>("transactions").updateOne(
+        { _id: transactionId },
+        { $set: { status: paymentStatus || "unknown" } }
+      );
+
       const data = await db
         .collection<Transaction>("transactions")
         .findOne({ _id: transactionId });

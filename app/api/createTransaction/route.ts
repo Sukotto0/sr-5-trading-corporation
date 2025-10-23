@@ -10,17 +10,18 @@ export async function POST(request: Request) {
     phone,
     productName,
     productId,
-    reservationFee,
+    toPay,
     referenceNumber,
     productPrice,
     appointment,
+    userId
   } = await request.json();
 
   paymaya.auth(process.env.MAYA_PUBLIC_KEY!, process.env.MAYA_SECRET_KEY!);
   const response = await paymaya.createV1Checkout({
     totalAmount: {
       currency: "PHP",
-      value: reservationFee,
+      value: toPay,
     },
     buyer: {
       firstName: firstName,
@@ -32,14 +33,14 @@ export async function POST(request: Request) {
         name: productName,
         code: productId,
         quantity: "1",
-        amount: { value: reservationFee },
-        totalAmount: { value: reservationFee, currency: "PHP" },
+        amount: { value: toPay },
+        totalAmount: { value: toPay, currency: "PHP" },
       },
     ],
     redirectUrl: {
-      success: `https://www.sr5tradingcorp.com/payments/success?id=${referenceNumber}`,
-      failure: `https://www.sr5tradingcorp.com/payments/failed?id=${referenceNumber}`,
-      cancel: `https://www.sr5tradingcorp.com/payments/cancelled?id=${referenceNumber}`,
+      success: `${process.env.NEXT_PUBLIC_BASE_URL}/payments/success?id=${referenceNumber}`,
+      failure: `${process.env.NEXT_PUBLIC_BASE_URL}/payments/failed?id=${referenceNumber}`,
+      cancel: `${process.env.NEXT_PUBLIC_BASE_URL}/payments/cancelled?id=${referenceNumber}`,
     },
     requestReferenceNumber: referenceNumber,
   });
@@ -59,8 +60,9 @@ export async function POST(request: Request) {
       phone,
       productName,
       productId,
-      reservationFee,
+      toPay,
       productPrice,
+      userId,
       appointment,
       createdAt: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),

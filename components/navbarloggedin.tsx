@@ -64,7 +64,7 @@ export default function NavbarDefault() {
   }, [disclosureOpen]);
 
   return (
-    <header className="bg-emerald-600">
+    <header className="bg-emerald-600 select-none">
       <nav className="mx-auto flex max-w-11/12 items-center justify-between px-6 py-3 lg:px-8">
         <div className="flex lg:flex-1">
           <a href="/" className="-m-1.5 p-1.5">
@@ -110,6 +110,9 @@ export default function NavbarDefault() {
           </Popover>
           <Link href="/services" className="text-sm font-semibold text-white">
             Services
+          </Link>
+          <Link href="/transactions" className="text-sm font-semibold text-white">
+            Transactions
           </Link>
           <Link href="/feedback" className="text-sm font-semibold text-white">
             Feedback
