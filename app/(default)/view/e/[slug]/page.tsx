@@ -9,7 +9,7 @@ import { createReservation, getProduct } from "@/app/actions";
 import { Product } from "@/hooks/useQuery";
 import Image from "next/image";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { Boxes, Lock } from "lucide-react";
+import { Boxes, Lock, MinusIcon, PlusIcon } from "lucide-react";
 import { ClipLoader, PuffLoader } from "react-spinners";
 
 export default function Browse({
@@ -23,6 +23,7 @@ export default function Browse({
   const [reservationFee, setReservationFee] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"reserve" | "book" | null>(null);
+  const [quantity, setQuantity] = useState(1);
   const { slug } = use(params);
 
   const { isSignedIn, user } = useUser();
@@ -132,18 +133,34 @@ export default function Browse({
                   : "Price Unavailable"}
               </p>
 
+              <div className="flex flex-col flex-wrap w-fit py-2 rounded-xl gap-3 mb-6">
+                <span className="text-black text-lg font-semibold">Quantity:</span>
+                <div className="flex flex-row items-center w-fit rounded-lg">
+                  <button onClick={() => quantity + 1 <= (product.quantity || 0) && setQuantity(quantity + 1)} className="hover:bg-black/30 bg-black/10 px-3 py-2 rounded-l-lg">
+                    <PlusIcon />
+                  </button>
+                  <input
+                    type="number"
+                    name="quantity"
+                    id="quantity"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.min(Math.max(1, parseInt(e.target.value) || 1), product.quantity || 1))}
+                    className="w-16 [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none text-center bg-white px-3 py-2 border"
+                  />
+                  <button onClick={() => quantity - 1 > 0 && setQuantity(quantity - 1)} className="hover:bg-black/30 bg-black/10 px-3 py-2 rounded-r-lg">
+                    <MinusIcon />
+                  </button>
+                </div>
+              </div>
               <div className="grid xl:grid-cols-2 gap-4 mb-4">
                 {isSignedIn ? (
                   <>
-                    <button
-                      className="flex items-center justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition duration-300 transform hover:scale-[1.01]"
-                    >
+                    <button className="flex items-center justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition duration-300 transform hover:scale-[1.01]">
                       <ShoppingBagIcon className="w-6 h-6 mr-3" />
                       Add to Cart
                     </button>
-                    <button
-                      className="flex items-center justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-red-900 hover:bg-red-950 transition duration-300 transform hover:scale-[1.01]"
-                    >
+                    <button className="flex items-center justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-red-900 hover:bg-red-950 transition duration-300 transform hover:scale-[1.01]">
                       <ShoppingBagIcon className="w-6 h-6 mr-3" />
                       Buy Now
                     </button>

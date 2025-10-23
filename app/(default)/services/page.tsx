@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   TruckIcon,
   WrenchIcon,
@@ -16,105 +16,27 @@ import {
   ScissorsLineDashed,
 } from "lucide-react";
 import { SignInButton, useUser } from "@clerk/nextjs";
+import { getServices } from "@/app/actions";
 
 // Data structure for the services offered
-const serviceOfferings = [
-  {
-    name: "TEST DRIVE A VEHICLE",
-    icon: TruckIcon,
-    description:
-      "Experience performance firsthand with our available test drive units. Get a feel for handling, comfort, and reliability before making your decision.",
-    benefits: ["Trucks", "Tractors", "Vans", "Other Units"],
-    color: "text-red-950",
-  },
-  {
-    name: "UPHOLSTERY",
-    icon: ScissorsLineDashed,
-    description:
-      "Transform your vehicle’s interior with professional upholstery repair and customization. We specialize in comfort, aesthetics, and long-lasting craftsmanship.",
-    benefits: [
-      "Minor and Major Repairs of unit Upholstery",
-      "Custom made Upholstery",
-      "Additional bucket seat installation",
-    ],
-    color: "text-red-950",
-  },
-  {
-    name: "AIRCONDITIONING",
-    icon: AirVent,
-    description:
-      "Stay cool and comfortable on the road. We provide expert repair, replacement, and maintenance services for automotive air conditioning systems.",
-    benefits: [
-      "Repair and Replacement services",
-      "Recharging or Refilling the refrigerant (Freon)",
-      "Car AC Installation",
-    ],
-    color: "text-red-950",
-  },
-  {
-    name: "TINSMITH SERVICES",
-    icon: BoltIcon,
-    description:
-      "High-quality metalwork and body customization for vehicles of all kinds. We handle everything from body dent repairs to full custom fabrication with precision and durability.",
-    benefits: [
-      "Food Truck Body Customization/Fabrication",
-      "Bullbar customization (Rear/Front)",
-      "Canopy Fabrication",
-      "Minor and Major Body Dent repairs",
-      "Body Alignment",
-      "Chassis Repairs",
-    ],
-    color: "text-red-950",
-  },
-  {
-    name: "PAINTING SERVICES",
-    icon: PaintbrushIcon,
-    description:
-      "Enhance and protect your vehicle’s appearance with our professional auto painting services — from minor touch-ups to full color transformations.",
-    benefits: [
-      "PARTIAL Body Repainting & Repair",
-      "Full car Repaint (Washover) & Full Car Change Color",
-      "Underchassis Repaint",
-      "Underchassis Rubberizing",
-      "RE-Buffing",
-      "Mags Painting",
-      "Paint Restoration",
-    ],
-    color: "text-red-950",
-  },
-  {
-    name: "MECHANIC SERVICES",
-    icon: WrenchIcon,
-    description:
-      "Comprehensive mechanical care for all vehicle types — from regular maintenance to complete engine overhauls. Our expert mechanics ensure your vehicle performs at its best.",
-    benefits: [
-      "Minor and Major Car Repairs and Reconditioning",
-      "Change oil",
-      "Brake service",
-      "Air filter replacement",
-      "Wheel Alignment",
-      "Top Overhaul",
-      "Complete Engine Overhaul",
-      "Engine Repair",
-      "Engine Replacement",
-      "Ignition System repair and maintenance",
-      "Fuel Injection Service & Repair",
-      "Transmission Replacement / Repair",
-      "Timing Belt Replacement",
-      "Belt and Hose Replacement",
-      "Lifting",
-      "Parts replacement",
-      "Installation of accessories",
-      "Underchassis Repairs",
-      "Suspension and Steering",
-      "Unit Scanning and Diagnostics",
-    ],
-    color: "text-red-950",
-  },
-];
+type serviceOffering = {
+  name: string,
+  icon: string,
+  description: string,
+  offers: string[],
+  color: string,
+};
 
 export default function App() {
   const { isSignedIn } = useUser();
+  const [serviceOfferings, setServiceOfferings] = useState<serviceOffering[]>([]);
+
+  useEffect(() => {
+    getServices().then((data) => {
+      setServiceOfferings(data.data);
+    });
+  }, []);
+        
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -144,10 +66,11 @@ export default function App() {
               <div
                 className={`p-3 inline-flex items-center justify-center h-12 w-12 rounded-full bg-black/8 mb-4`}
               >
-                <service.icon
+                {/* <service.icon
                   className={`h-6 w-6 ${service.color}`}
                   aria-hidden="true"
-                />
+                /> */}
+                <span className="text-2xl">{service.icon}</span>
               </div>
               <h2 className="text-xl font-bold text-black/95 mb-3">
                 {service.name}
@@ -157,7 +80,7 @@ export default function App() {
               </p>
 
               <ul className="space-y-2 text-sm text-gray-700">
-                {service.benefits.map((benefit, index) => (
+                {service.offers.map((offer, index) => (
                   <li key={index} className="flex items-center">
                     <svg
                       className="h-4 w-4 text-green-500 mr-2 flex-shrink-0"
@@ -170,7 +93,7 @@ export default function App() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    {benefit}
+                    {offer}
                   </li>
                 ))}
               </ul>
@@ -202,9 +125,9 @@ export default function App() {
             ) : (
               <SignInButton mode="modal" forceRedirectUrl={"/schedule"}>
                 <p className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-red-900 bg-white hover:bg-indigo-50 duration-200 transform hover:scale-105 transition-all">
-                    <Lock className="mr-2 h-5 w-5" aria-hidden="true" />
-                    Sign In to Request an Appointment
-                  </p>
+                  <Lock className="mr-2 h-5 w-5" aria-hidden="true" />
+                  Sign In to Request an Appointment
+                </p>
               </SignInButton>
             )}
           </div>

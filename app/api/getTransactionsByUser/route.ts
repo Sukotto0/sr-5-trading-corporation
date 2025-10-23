@@ -21,7 +21,6 @@ export async function GET(req: Request) {
         .find({ userId })
         .toArray();
 
-        console.log("Transactions for user:", data);
       return NextResponse.json({ success: true, data });
     } else {
       return NextResponse.json({

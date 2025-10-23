@@ -190,3 +190,45 @@ export async function getTransactionsByUser(userId: string) {
     return data.data;
   }
 }
+
+export async function getServices(){
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/getServices`,
+    { method: "GET" }
+  );
+
+  const data = await response.json();
+  if (data.success) {
+    return data;
+  }
+}
+
+export async function createAppointment(data: any) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/createAppointment`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  return response.json();
+}
+
+export async function createFeedback(data: any) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/createFeedback`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  return response.json();
+}

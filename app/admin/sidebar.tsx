@@ -15,7 +15,12 @@ import {
   EyeIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { ChartAreaIcon, ShoppingBasket } from "lucide-react";
+import {
+  ChartAreaIcon,
+  ShoppingBasket,
+  MessagesSquareIcon,
+  MessageSquare,
+} from "lucide-react";
 import { SignOutButton, useUser } from "@clerk/nextjs";
 
 const navigation = [
@@ -46,6 +51,13 @@ const navigation = [
     current: false,
     section: "GENERAL",
     href: "/admin/sales",
+  },
+  {
+    name: "Feedback Records",
+    icon: MessageSquare,
+    current: false,
+    section: "GENERAL",
+    href: "/admin/feedback",
   },
   {
     name: "Settings",
@@ -87,7 +99,13 @@ export default function Sidebar() {
       {/* User Profile */}
       <div className="p-4 border-b border-white/10 text-black">
         <div className="flex items-center space-x-3">
-          <Image src={user?.imageUrl || "/images/SR5MoreMinimal.png"} alt="Profile Icon" width={40} height={40} className="rounded-full"/>
+          <Image
+            src={user?.imageUrl || "/images/SR5MoreMinimal.png"}
+            alt="Profile Icon"
+            width={40}
+            height={40}
+            className="rounded-full"
+          />
           <div>
             <p className="text-sm font-semibold">{user?.username}</p>
             <a

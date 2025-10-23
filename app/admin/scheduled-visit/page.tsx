@@ -11,12 +11,12 @@ const localizer = momentLocalizer(moment);
 
 const placeholderEvents: RBCEvent[] = [
   {
-    title: "Test drive Schedule",
+    title: "Test Drive Schedule",
     start: new Date(2025, 8, 21, 14, 0),
     end: new Date(2025, 8, 21, 15, 0),
   },
   {
-    title: "Costumer Visit",
+    title: "Customer Visit",
     start: new Date(2025, 8, 22, 10, 0),
     end: new Date(2025, 8, 22, 11, 30),
   },
@@ -27,14 +27,14 @@ const placeholderEvents: RBCEvent[] = [
   },
 ];
 
-export default function AppointmentsPage() {
+export default function AdminAppointmentsPage() {
   const [events] = useState<RBCEvent[]>(placeholderEvents);
   const [view, setView] = useState<View>("month");
   const [selectedEvent, setSelectedEvent] = useState<RBCEvent | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth < 640) {
-      setView("day"); // mobile defaults to day view
+      setView("day");
     }
   }, []);
 
@@ -64,8 +64,57 @@ export default function AppointmentsPage() {
           </h1>
         </div>
       </header>
+
+      {/* Appointment Table */}
+      <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">
+          Upcoming Appointments
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-gray-200 text-sm">
+            <thead className="bg-gray-100 text-gray-700">
+              <tr>
+                <th className="py-3 px-4 text-left border-b">Title</th>
+                <th className="py-3 px-4 text-left border-b">Start</th>
+                <th className="py-3 px-4 text-left border-b">End</th>
+                <th className="py-3 px-4 text-left border-b">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {events.map((event, index) => (
+                <tr
+                  key={index}
+                  className="hover:bg-emerald-50 transition-all duration-150"
+                >
+                  <td className="py-3 px-4 border-b font-medium text-gray-800">
+                    {event.title}
+                  </td>
+                  <td className="py-3 px-4 border-b text-gray-600">
+                    {moment(event.start).format("LLL")}
+                  </td>
+                  <td className="py-3 px-4 border-b text-gray-600">
+                    {moment(event.end).format("LLL")}
+                  </td>
+                  <td className="py-3 px-4 border-b">
+                    <button
+                      onClick={() => setSelectedEvent(event)}
+                      className="px-4 py-1.5 text-sm rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 transition-all"
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Calendar */}
-      <div className="bg-white p-6 rounded-2xl shadow-lg overflow-x-auto">
+      <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 overflow-x-auto">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">
+          Calendar Overview
+        </h2>
         <div className="h-[500px] sm:h-[600px] md:h-[700px]">
           <Calendar
             localizer={localizer}
@@ -85,21 +134,22 @@ export default function AppointmentsPage() {
 
       {/* Modal */}
       {selectedEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 bg-opacity-50">
-          <div className="bg-white rounded-2xl shadow-lg p-6 w-96 max-w-full">
-            <h3 className="text-2xl font-bold mb-4">{selectedEvent.title}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-96 max-w-full border border-gray-100">
+            <h3 className="text-2xl font-bold mb-4 text-gray-900">
+              {selectedEvent.title}
+            </h3>
             <p className="text-gray-600 mb-2">
-              <strong>From:</strong>{" "}
-              {moment(selectedEvent.start).format("LLLL")}
+              <strong>From:</strong> {moment(selectedEvent.start).format("LLLL")}
             </p>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 mb-6">
               <strong>To:</strong> {moment(selectedEvent.end).format("LLLL")}
             </p>
 
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
+                className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-all"
               >
                 Close
               </button>
@@ -108,7 +158,7 @@ export default function AppointmentsPage() {
                   alert("📌 You joined this session!");
                   setSelectedEvent(null);
                 }}
-                className="px-4 py-2 rounded-lg bg-green-700 text-white hover:bg-green-800"
+                className="px-4 py-2 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 transition-all"
               >
                 Join
               </button>

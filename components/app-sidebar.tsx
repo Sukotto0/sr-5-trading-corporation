@@ -5,6 +5,7 @@ import {
   BoxesIcon,
   ChartBarIcon,
   GalleryVerticalEnd,
+  MessageSquare,
   SquareTerminal,
   TimerIcon,
   UserCog2,
@@ -59,6 +60,11 @@ const data = {
       icon: TimerIcon,
     },
     {
+      title: "Feedback Records",
+      icon: MessageSquare,
+      url: "/admin/feedback",
+    },
+    {
       title: "Users",
       url: "#",
       icon: UserCog2,
@@ -90,10 +96,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <div className="flex flex-row items-center flex-nowrap gap-3">
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
-            <Image src="/images/SR5MoreMinimal.png" width={80} height={80} alt="SR-5 Trading Corporation Logo" className="rounded-lg"/>
+            <Image
+              src="/images/SR5MoreMinimal.png"
+              width={80}
+              height={80}
+              alt="SR-5 Trading Corporation Logo"
+              className="rounded-lg"
+            />
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight mt-1">
-            <span className="truncate font-semibold">SR-5 Trading Corporation</span>
+            <span className="truncate font-semibold">
+              SR-5 Trading Corporation
+            </span>
           </div>
         </div>
       </SidebarHeader>

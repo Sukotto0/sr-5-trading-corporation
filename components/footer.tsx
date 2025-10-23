@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="flex flex-col gap-4 sm:gap-0 sm:flex-row items-center justify-around bg-black/20 text-base-content p-10">
+    <footer className="flex flex-col gap-4 sm:gap-0 sm:flex-row items-center justify-around bg-black/20 text-base-content p-10 select-none">
       <aside className="flex flex-col items-center justify-center">
         <Image
           src={"/images/SR5TradingCorporation.png"}
