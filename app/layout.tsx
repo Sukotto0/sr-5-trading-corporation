@@ -2,9 +2,7 @@ import { ClerkProvider, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/footer";
-import { usePathname } from "next/navigation";
 import QueryProviders from "@/components/providers/QueryProviders";
-import { useState } from "react";
 import Navigation from "@/components/navbar";
 import { type Metadata } from "next";
 
@@ -30,7 +28,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
 
   return (
     <ClerkProvider
@@ -53,7 +50,7 @@ export default function RootLayout({
             <div className="grow w-full">{children}</div>
           </QueryProviders>
           {/* Footer */}
-          {!pathname.startsWith("/admin") && <Footer />}
+          <Footer />
         </body>
       </html>
     </ClerkProvider>

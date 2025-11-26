@@ -1,6 +1,10 @@
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
+  if (pathname.startsWith("/admin")) return <></>;
+
   return (
     <footer className="flex flex-col gap-4 sm:gap-0 sm:flex-row items-center justify-around bg-black/20 text-base-content p-10 select-none">
       <aside className="flex flex-col items-center justify-center">
@@ -16,7 +20,7 @@ export default function Footer() {
         </p>
       </aside>
 
-       <div className="w-full max-w-5xl">
+      <div className="w-full max-w-5xl">
         <div className="grid grid-cols-1 md:grid-cols-2">
           <div className="rounded-2xl flex flex-col items-center">
             <h2 className="text-xl font-bold mb-2 text-blue-600">Cavite</h2>
@@ -55,7 +59,6 @@ export default function Footer() {
           </div>
         </div>
       </div>
-
 
       <nav className="flex flex-col text-center sm:text-left">
         <h6 className="footer-title">Legal</h6>
