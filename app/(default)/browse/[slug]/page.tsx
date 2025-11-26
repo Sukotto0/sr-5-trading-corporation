@@ -20,6 +20,7 @@ import {
 } from "@/hooks/useQuery";
 import { use } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const productsCategory = [
   { name: "Trucks", href: "/browse/trucks"},
@@ -532,7 +533,9 @@ export default function Browse({
                         className="group relative border border-gray-200 rounded-lg overflow-hidden shadow-sm"
                       >
                         <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
-                          <img
+                          <Image
+                          width={300}
+                          height={300}
                             src={product.imageUrl}
                             alt={product.name}
                             className="h-full w-full object-cover object-center lg:h-full lg:w-full"
