@@ -21,6 +21,15 @@ import {
 import { use } from "react";
 import Link from "next/link";
 
+const productsCategory = [
+  { name: "Trucks", href: "/browse/trucks"},
+  { name: "Heavy Equipment", href: "/browse/heavy-equipment"},
+  { name: "Units", href: "/browse/units"},
+  { name: "Engine", href: "/browse/engine"},
+  { name: "Tools", href: "/browse/tools"},
+  { name: "Parts & Accessories", href: "/browse/parts-accessories"},
+];
+
 // Sort options for products
 const sortOptions = [
   { name: "Relevance", value: "relevance", current: true },
@@ -46,6 +55,7 @@ export default function Browse({
   });
   const [currentSort, setCurrentSort] = useState("relevance");
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  const [showDevWarning, setShowDevWarning] = useState(true);
 
   // Fetch filters and products using React Query
   const {
@@ -308,7 +318,7 @@ export default function Browse({
         <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="relative z-10 flex items-baseline justify-between pt-24 pb-6 border-b border-gray-200">
             <h1 className="text-4xl font-bold tracking-tight text-gray-900">
-              Browse "{slug.charAt(0).toUpperCase() + slug.slice(1)}"
+              Browsing "{slug.charAt(0).toUpperCase() + slug.slice(1)}"
             </h1>
             <div className="flex items-center">
               <Menu as="div" className="relative inline-block text-left">
@@ -348,9 +358,22 @@ export default function Browse({
             <h2 id="products-heading" className="sr-only">
               Products
             </h2>
-            <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4 relative">
+              
               {/* Filter sidebar */}
-              <form className="hidden lg:block">
+              <form className="hidden lg:block sticky top-0 h-fit">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  CATEGORIES
+                </h3>
+                <ul className="mb-8 space-y-2">
+                 {productsCategory.map((product) => (
+                    <li key={product.name}>
+                      <Link href={product.href} className="text-gray-600 hover:text-gray-900">
+                        {product.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">
                   FILTER SEARCH
                 </h3>
@@ -504,7 +527,7 @@ export default function Browse({
                   <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
                     {products.map((product) => (
                       <Link
-                      href={(slug == "equipment" || slug == "parts-accessories") ? `/view/e/${product.id}` : `/view/v/${product.id}`}
+                      href={(slug == "tools" || slug == "parts-accessories") ? `/view/e/${product.id}` : `/view/v/${product.id}`}
                         key={product.id}
                         className="group relative border border-gray-200 rounded-lg overflow-hidden shadow-sm"
                       >
@@ -542,6 +565,21 @@ export default function Browse({
             </div>
           </section>
         </main>
+        {showDevWarning && (
+  <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded-md shadow-lg z-50 flex items-start max-w-xs">
+    <div className="flex-1 text-sm">
+      ⚠️ This website is currently in development.  
+      All products & services shown are placeholders only, and NOT actual products of SR-5 Trading Corporation.
+    </div>
+    <button
+      onClick={() => setShowDevWarning(false)}
+      className="ml-3 text-red-800 hover:text-red-900"
+    >
+      ✕
+    </button>
+  </div>
+)}
+
       </div>
     </div>
   );

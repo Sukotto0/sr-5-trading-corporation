@@ -79,9 +79,12 @@ export default function NavbarDefault() {
 
         {/* Desktop Nav */}
         <PopoverGroup className="hidden lg:flex lg:gap-x-12">
-          <Popover className="relative">
+          <Link href="/" className="text-sm font-semibold text-white">
+            Home
+          </Link>
+          {/* <Popover className="relative">
             <PopoverButton className="flex items-center gap-x-1 text-sm font-semibold text-white">
-              Browse
+              Products
               <ChevronDownIcon className="h-5 w-5 text-gray-300" />
             </PopoverButton>
             <PopoverPanel className="absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 rounded-3xl bg-white shadow-lg p-4">
@@ -96,7 +99,10 @@ export default function NavbarDefault() {
                 </Link>
               ))}
             </PopoverPanel>
-          </Popover>
+          </Popover> */}
+          <Link href="/browse/trucks" className="text-sm font-semibold text-white">
+            Products
+          </Link> 
           <Link href="/services" className="text-sm font-semibold text-white">
             Services
           </Link>
@@ -104,7 +110,7 @@ export default function NavbarDefault() {
             <div className="text-sm font-semibold text-white cursor-pointer">Schedule a Visit</div>
           </SignInButton>
           <SignInButton mode="modal">
-            <div className="text-sm font-semibold text-white cursor-pointer">Sign In</div>
+            <div className="text-sm font-semibold text-white cursor-pointer">Log In</div>
           </SignInButton>
           <SignUpButton mode="modal">
             <div className="text-sm font-semibold text-white cursor-pointer">Sign Up</div>

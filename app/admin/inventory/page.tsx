@@ -79,8 +79,10 @@ const Inventory = () => {
   useEffect(() => {
     getInventory().then((data) => {
       if (data && data.success) {
-        console.log("Fetched inventory data:", data.data);
-        setInventoryData(data.data);
+        const sortedData = data.data.sort((a: InventoryItem, b: InventoryItem) =>
+          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+        );
+        setInventoryData(sortedData);
       } else {
         console.error("Failed to fetch inventory data");
       }
@@ -155,8 +157,10 @@ const Inventory = () => {
 
       getInventory().then((data) => {
         if (data && data.success) {
-          console.log("Fetched inventory data:", data.data);
-          setInventoryData(data.data);
+          const sortedData = data.data.sort((a: InventoryItem, b: InventoryItem) =>
+          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+        );
+        setInventoryData(sortedData);
         } else {
           console.error("Failed to fetch inventory data");
         }
@@ -254,8 +258,10 @@ const Inventory = () => {
 
       getInventory().then((data) => {
         if (data && data.success) {
-          console.log("Fetched inventory data:", data.data);
-          setInventoryData(data.data);
+          const sortedData = data.data.sort((a: InventoryItem, b: InventoryItem) =>
+          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+        );
+        setInventoryData(sortedData);
         } else {
           console.error("Failed to fetch inventory data");
         }
@@ -290,8 +296,10 @@ const Inventory = () => {
       deleteProduct({ documentId: deletingItem._id });
       getInventory().then((data) => {
         if (data && data.success) {
-          console.log("Fetched inventory data:", data.data);
-          setInventoryData(data.data);
+          const sortedData = data.data.sort((a: InventoryItem, b: InventoryItem) =>
+          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+        );
+        setInventoryData(sortedData);
         } else {
           console.error("Failed to fetch inventory data");
         }
@@ -338,7 +346,7 @@ const Inventory = () => {
       </div>
 
       {/* Inventory Table */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden h-full grow-1">
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden h-full grow">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -526,11 +534,12 @@ const Inventory = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="">Select a category</option>
-                  <option value="engine">Trucks</option>
-                  <option value="equipment">Equipment</option>
-                  <option value="parts-accessories">Parts & Accessories</option>
                   <option value="trucks">Trucks</option>
+                  <option value="heavy-equipment">Heavy Equipment</option>
                   <option value="units">Units</option>
+                  <option value="engine">Engine</option>
+                  <option value="tools">Tools</option>
+                  <option value="parts-accessories">Parts & Accessories</option>
                 </select>
               </div>
 
@@ -673,12 +682,12 @@ const Inventory = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="">Select a category</option>
-                  <option value="engine">Engine</option>
-                  <option value="equipment">Equipment</option>
-                  <option value="parts-accessories">Parts & Accessories</option>
-                  <option value="services">Services</option>
                   <option value="trucks">Trucks</option>
+                  <option value="heavy-equipment">Heavy Equipment</option>
                   <option value="units">Units</option>
+                  <option value="engine">Engine</option>
+                  <option value="tools">Tools</option>
+                  <option value="parts-accessories">Parts & Accessories</option>
                 </select>
               </div>
 
@@ -797,7 +806,7 @@ const Inventory = () => {
         <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex items-start">
-              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+              <div className="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
                 <TrashIcon
                   className="h-6 w-6 text-red-600"
                   aria-hidden="true"

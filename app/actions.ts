@@ -153,7 +153,7 @@ export async function createReservation(formData: FormData) {
         referenceNumber,
         productPrice,
         appointment,
-        userId
+        userId,
       }),
     }
   );
@@ -191,7 +191,7 @@ export async function getTransactionsByUser(userId: string) {
   }
 }
 
-export async function getServices(){
+export async function getServices() {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_BASE_URL}/api/getServices`,
     { method: "GET" }
@@ -232,3 +232,49 @@ export async function createFeedback(data: any) {
 
   return response.json();
 }
+
+export async function addToCart(data: any) {
+  const formattedData = data;
+  formattedData.quantity = parseInt(data.quantity, 10);
+  formattedData.price = parseFloat(data.price);
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/addToCart`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  return response.json();
+}
+
+export async function getCartItems(userId: string) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/getCartItems?userId=${userId}`,
+    { method: "GET" }
+  );
+  const data = await response.json();
+  if (data.success) {
+    return data.data;
+  }
+}
+
+export async function removeCartItem(itemId: number) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/removeCartItem`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ itemId }),
+    }
+  );
+
+  return response.json();
+}
+

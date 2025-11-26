@@ -109,7 +109,7 @@ const AdminDashboard = () => {
                         <h3 className="text-xl font-bold">UPCOMING EVENTS</h3>
                         <p className="text-sm font-light">TODAY: 9/30/2025</p>
                     </div>
-                    <div className="flex-grow flex items-center justify-center text-center py-16 px-4">
+                    <div className="grow flex items-center justify-center text-center py-16 px-4">
                         <p className="text-gray-400 font-medium text-lg">No upcoming events</p>
                     </div>
                 </div>

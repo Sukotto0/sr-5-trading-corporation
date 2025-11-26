@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MinusIcon, PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
+import { useUser } from "@clerk/nextjs";
+import { getCartItems } from "@/app/actions";
 
 // Helper for formatting currency (using the Philippine Peso symbol for consistency)
 const formatCurrency = (amount: any) => {
@@ -9,36 +11,30 @@ const formatCurrency = (amount: any) => {
   return `₱${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 };
 
+type CartItem = {
+  id: number;
+  productName: string;
+  price: number;
+  quantity: number;
+  imageUrl: string;
+};
 export default function ShoppingCart() {
-  // Note: Removed TypeScript annotation from the original prompt for compatibility with .jsx
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Wireless Bluetooth Headphones",
-      price: 59.99,
-      quantity: 1,
-      // Using placeholder image with fallback for consistency
-      image: "https://placehold.co/64x64/525252/ffffff?text=Headphones",
-    },
-    {
-      id: 2,
-      name: "Smartwatch with Fitness Tracker",
-      price: 129.99, // Adjusted price from 12900.99 for a more realistic example
-      quantity: 2,
-      image: "https://placehold.co/64x64/525252/ffffff?text=Smartwatch",
-    },
-    {
-      id: 3,
-      name: "Portable Power Bank 10000mAh",
-      price: 24.5,
-      quantity: 1,
-      image: "https://placehold.co/64x64/525252/ffffff?text=Power+Bank",
-    },
-  ]);
+  const { user } = useUser();
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      getCartItems(user.id).then((response) => {
+        if (response) {
+          setCartItems(response || []);
+        }
+      });
+    }
+  }, [user]);
 
   const incrementQuantity = (id: number) => {
     setCartItems((prev) =>
-      prev.map((item) =>
+      prev?.map((item) =>
         item.id === id ? { ...item, quantity: item.quantity + 1 } : item
       )
     );
@@ -46,7 +42,7 @@ export default function ShoppingCart() {
 
   const decrementQuantity = (id: number) => {
     setCartItems((prev) =>
-      prev.map((item) =>
+      prev?.map((item) =>
         item.id === id && item.quantity > 1
           ? { ...item, quantity: item.quantity - 1 }
           : item
@@ -55,13 +51,11 @@ export default function ShoppingCart() {
   };
 
   const removeItem = (id: number) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
+    setCartItems((prev) => prev?.filter((item) => item.id !== id));
   };
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const subtotal =
+    cartItems?.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0;
 
   const total = subtotal; // Keeping total the same as subtotal for simplicity (no taxes/shipping)
 
@@ -70,10 +64,10 @@ export default function ShoppingCart() {
       <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full p-6 sm:p-10 border border-gray-100">
         {/* Header */}
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8 border-b pb-4">
-          Your Shopping Cart ({cartItems.length} items)
+          Your Shopping Cart ({cartItems?.length || 0} items)
         </h1>
 
-        {cartItems.length === 0 ? (
+        {cartItems && cartItems?.length === 0 ? (
           <p className="text-gray-600 text-center text-xl py-12">
             Your cart is empty. Start shopping now!
           </p>
@@ -81,7 +75,7 @@ export default function ShoppingCart() {
           <div className="space-y-6">
             {/* Cart Items List */}
             <div className="divide-y divide-gray-100">
-              {cartItems.map((item) => (
+              {cartItems?.map((item) => (
                 <div
                   key={item.id}
                   // Flex layout for item row, stacks on mobile (sm:flex-row)
@@ -91,12 +85,12 @@ export default function ShoppingCart() {
                   <div className="flex items-center space-x-4 w-full sm:w-1/2">
                     <img
                       className="size-16 rounded-lg object-cover border border-gray-100"
-                      src={item.image}
-                      alt={item.name}
+                      src={item.imageUrl}
+                      alt={item.productName}
                     />
-                    <div className="flex-grow">
+                    <div className="grow">
                       <div className="text-base font-semibold text-gray-900 line-clamp-2">
-                        {item.name}
+                        {item.productName}
                       </div>
                       <div className="text-sm text-gray-500 font-medium mt-1">
                         {formatCurrency(item.price)}
@@ -136,7 +130,7 @@ export default function ShoppingCart() {
                     <button
                       className="text-red-500 hover:text-red-700 p-2 ml-2 rounded-full hover:bg-red-50 transition duration-150"
                       onClick={() => removeItem(item.id)}
-                      aria-label={`Remove ${item.name}`}
+                      aria-label={`Remove ${item.productName}`}
                     >
                       <TrashIcon className="h-5 w-5" aria-hidden="true" />
                     </button>
@@ -146,39 +140,27 @@ export default function ShoppingCart() {
             </div>
 
             {/* Summary and Checkout */}
-            <div className="flex justify-end pt-8 border-t border-gray-100">
-              <div className="w-full max-w-sm space-y-4">
-                {/* Subtotal */}
-                <div className="flex justify-between text-gray-700">
-                  <span className="text-lg">Subtotal</span>
-                  <span className="text-lg font-medium">
-                    {formatCurrency(subtotal)}
-                  </span>
-                </div>
+            {cartItems && cartItems?.length > 0 && (
+              <div className="flex justify-end pt-8 border-t border-gray-100">
+                <div className="w-full max-w-sm space-y-4">
+                  {/* Order Total */}
+                  <div className="flex justify-between text-xl font-extrabold text-gray-900 pt-3">
+                    <span>Order Total</span>
+                    <span>{formatCurrency(total)}</span>
+                  </div>
 
-                {/* Shipping placeholder */}
-                <div className="flex justify-between text-gray-700 border-b border-gray-200 pb-4">
-                  <span className="text-lg">Shipping</span>
-                  <span className="text-lg font-medium">Free</span>
-                </div>
-
-                {/* Order Total */}
-                <div className="flex justify-between text-xl font-extrabold text-gray-900 pt-3">
-                  <span>Order Total</span>
-                  <span>{formatCurrency(total)}</span>
-                </div>
-
-                {/* Checkout Button (Emerald Theme) */}
-                <div className="pt-6">
-                  <button
-                    type="button"
-                    className="w-full bg-emerald-600 text-white text-lg font-bold py-4 rounded-xl shadow-xl hover:bg-emerald-700 transition duration-300 transform hover:scale-[1.005] focus:outline-none focus:ring-4 focus:ring-emerald-500/50"
-                  >
-                    Proceed to Checkout
-                  </button>
+                  {/* Checkout Button (Emerald Theme) */}
+                  <div className="pt-6">
+                    <button
+                      type="button"
+                      className="w-full bg-emerald-600 text-white text-lg font-bold py-4 rounded-xl shadow-xl hover:bg-emerald-700 transition duration-300 transform hover:scale-[1.005] focus:outline-none focus:ring-4 focus:ring-emerald-500/50"
+                    >
+                      Proceed to Checkout
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>

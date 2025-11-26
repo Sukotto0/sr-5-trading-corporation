@@ -8,6 +8,7 @@ import NavbarDefault from "@/components/navbardefault";
 import { usePathname } from "next/navigation";
 import QueryProviders from "@/components/providers/QueryProviders";
 import { useState } from "react";
+import Navigation from "@/components/navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,12 +42,7 @@ export default function RootLayout({
         >
           {/* Navbar */}
           <div className="z-50">
-            <SignedOut>
-              {!pathname.startsWith("/admin") && <NavbarDefault />}
-            </SignedOut>
-            <SignedIn>
-              {!pathname.startsWith("/admin") && <NavbarLoggedIn />}
-            </SignedIn>
+            <Navigation />
           </div>
           {/* Main Content */}
           <QueryProviders>

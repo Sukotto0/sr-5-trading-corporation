@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { useUser } from "@clerk/nextjs";
 import {
@@ -8,6 +8,7 @@ import {
   getServices,
 } from "@/app/actions";
 import { ClipLoader } from "react-spinners";
+import { useSearchParams } from "next/navigation";
 
 type serviceOffering = {
   name: string;
@@ -18,7 +19,16 @@ type serviceOffering = {
 };
 
 export default function ScheduleVisitForm() {
+  return (
+    <Suspense>
+      <ScheduleVisitComponent />
+    </Suspense>
+  );
+}
+
+function ScheduleVisitComponent() {
   const { user } = useUser();
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || "",
@@ -36,7 +46,8 @@ export default function ScheduleVisitForm() {
     formData.firstName = user?.firstName || "";
     formData.surname = user?.lastName || "";
     formData.email = user?.primaryEmailAddress?.emailAddress || "";
-  }, [user]);
+    formData.purpose = searchParams.get("purpose") || "";
+  }, [user, searchParams]);
 
   const [serviceOfferings, setServiceOfferings] = useState<serviceOffering[]>(
     []

@@ -119,7 +119,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-grow overflow-y-auto p-4 space-y-1">
+      <nav className="grow overflow-y-auto p-4 space-y-1">
         <p className="px-3 pt-2 pb-2 text-xs font-semibold uppercase text-black/90">
           GENERAL
         </p>
