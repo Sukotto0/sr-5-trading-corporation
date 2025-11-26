@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import QueryProviders from "@/components/providers/QueryProviders";
 import { useState } from "react";
 import Navigation from "@/components/navbar";
+import { type Metadata } from "next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,6 +21,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const metadata: Metadata = {
+  title: "SR-5 Trading Corporation",
+  description:
+    "This website is still under development. Stay tuned for updates!",
+};
+
+// description: "Empowering growth, innovation, and collaboration across all fields. Innovation That Inspires. We push boundaries and deliver outstanding experiences.",
 export default function RootLayout({
   children,
 }: Readonly<{
