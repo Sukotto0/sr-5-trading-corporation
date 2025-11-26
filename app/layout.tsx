@@ -1,13 +1,10 @@
-"use client";
 import { ClerkProvider, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/footer";
-import NavbarLoggedIn from "@/components/navbarloggedin";
-import NavbarDefault from "@/components/navbardefault";
-import { usePathname } from "next/navigation";
 import QueryProviders from "@/components/providers/QueryProviders";
-import { useState } from "react";
+import Navigation from "@/components/navbar";
+import { type Metadata } from "next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,13 +16,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const metadata: Metadata = {
+  title: "SR-5 Trading Corporation",
+  description:
+    "This website is still under development. Stay tuned for updates!",
+};
+
+// description: "Empowering growth, innovation, and collaboration across all fields. Innovation That Inspires. We push boundaries and deliver outstanding experiences.",
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [initialLoad, setInitialLoad] = useState(true);
-  const pathname = usePathname();
 
   return (
     <ClerkProvider
@@ -41,19 +43,14 @@ export default function RootLayout({
         >
           {/* Navbar */}
           <div className="z-50">
-            <SignedOut>
-              {!pathname.startsWith("/admin") && <NavbarDefault />}
-            </SignedOut>
-            <SignedIn>
-              {!pathname.startsWith("/admin") && <NavbarLoggedIn />}
-            </SignedIn>
+            <Navigation />
           </div>
           {/* Main Content */}
           <QueryProviders>
             <div className="grow w-full">{children}</div>
           </QueryProviders>
           {/* Footer */}
-          {!pathname.startsWith("/admin") && <Footer />}
+          <Footer />
         </body>
       </html>
     </ClerkProvider>

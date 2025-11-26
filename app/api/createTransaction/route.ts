@@ -1,4 +1,4 @@
-import paymaya from "@api/paymaya";
+import paymaya from 'paymaya-js-sdk';
 import clientPromise from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 
@@ -17,8 +17,8 @@ export async function POST(request: Request) {
     userId
   } = await request.json();
 
-  paymaya.auth(process.env.MAYA_PUBLIC_KEY!, process.env.MAYA_SECRET_KEY!);
-  const response = await paymaya.createV1Checkout({
+  paymaya.init(process.env.MAYA_PUBLIC_KEY!, true);
+  const response: any = await paymaya.createCheckout({
     totalAmount: {
       currency: "PHP",
       value: toPay,
@@ -32,9 +32,9 @@ export async function POST(request: Request) {
       {
         name: productName,
         code: productId,
-        quantity: "1",
+        quantity: 1,
         amount: { value: toPay },
-        totalAmount: { value: toPay, currency: "PHP" },
+        totalAmount: { value: toPay },
       },
     ],
     redirectUrl: {
@@ -42,10 +42,15 @@ export async function POST(request: Request) {
       failure: `${process.env.NEXT_PUBLIC_BASE_URL}/payments/failed?id=${referenceNumber}`,
       cancel: `${process.env.NEXT_PUBLIC_BASE_URL}/payments/cancelled?id=${referenceNumber}`,
     },
+    metadata: {
+      productId,
+      userId,
+      appointment,
+    },
     requestReferenceNumber: referenceNumber,
   });
 
-  const paymentDetails = await response.data
+  const paymentDetails = response?.checkoutId;
 
   try {
     const client = await clientPromise;
@@ -67,7 +72,7 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
       status: "pending",
-      paymentId: paymentDetails.checkoutId,
+      paymentId: paymentDetails,
     };
 
     const data = await db

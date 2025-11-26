@@ -38,7 +38,7 @@ const DetailItem = ({ icon: Icon, label, value, isLink = false }: any) => (
   </div>
 );
 
-const SuccessfulPayments = () => {
+const SuccessfulPayments = (props: any) => {
   const searchParams = useSearchParams();
   const [transactionData, setTransactionData] = useState<any>({});
 

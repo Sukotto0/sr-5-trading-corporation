@@ -20,23 +20,35 @@ import { getServices } from "@/app/actions";
 
 // Data structure for the services offered
 type serviceOffering = {
-  name: string,
-  icon: string,
-  description: string,
-  offers: string[],
-  color: string,
+  name: string;
+  icon: string;
+  description: string;
+  offers: string[];
+  color: string;
 };
 
 export default function App() {
   const { isSignedIn } = useUser();
-  const [serviceOfferings, setServiceOfferings] = useState<serviceOffering[]>([]);
+  const [truncate, setTruncate] = useState<boolean[]>([]);
+  const [serviceOfferings, setServiceOfferings] = useState<serviceOffering[]>(
+    []
+  );
+  const [showWarning, setShowWarning] = useState(true);
+
+  useEffect(() => {
+    var tempTruncate: boolean[] = [];
+    serviceOfferings.forEach(() => {
+      tempTruncate.push(true);
+    });
+
+    setTruncate(tempTruncate);
+  }, [serviceOfferings]);
 
   useEffect(() => {
     getServices().then((data) => {
       setServiceOfferings(data.data);
     });
   }, []);
-        
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -58,47 +70,60 @@ export default function App() {
 
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {serviceOfferings.map((service) => (
-            <div
-              key={service.name}
-              className="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 sm:p-8 border-t-4 border-red-950"
-            >
+          {serviceOfferings.map((service, i) => {
+            return (
               <div
-                className={`p-3 inline-flex items-center justify-center h-12 w-12 rounded-full bg-black/8 mb-4`}
+                key={service.name}
+                className="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 sm:p-8 border-t-4 border-red-950 h-full flex flex-col"
               >
-                {/* <service.icon
-                  className={`h-6 w-6 ${service.color}`}
-                  aria-hidden="true"
-                /> */}
-                <span className="text-2xl">{service.icon}</span>
+                <div
+                  className={`p-3 items-center justify-center h-15 w-15 rounded-full bg-black/8 mb-4 mx-auto flex`}
+                >
+                  <span className="text-3xl">{service.icon}</span>
+                </div>
+                <h2 className="text-xl font-bold text-black/95 mb-3">
+                  {service.name}
+                </h2>
+                <div className="mb-4">
+                  <p
+                    className={`text-gray-700 text-sm ${truncate[i] ? "truncate" : ""}`}
+                  >
+                    {service.description}
+                  </p>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const newTruncate = [...truncate];
+                      newTruncate[i] = !newTruncate[i];
+                      setTruncate(newTruncate);
+                    }}
+                    className="text-green-600 text-sm hover:text-black hover:cursor-pointer"
+                  >
+                    {truncate[i] ? "Read More" : "Show Less"}
+                  </button>
+                </div>
+                <ul className="space-y-2 text-sm text-gray-700 max-h-40 overflow-y-auto mb-6">
+                  {service.offers.map((offer, index) => (
+                    <li key={index} className="flex items-center">
+                      <svg
+                        className="h-4 w-4 text-green-500 mr-2 shrink-0"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      {offer}
+                    </li>
+                  ))}
+                </ul>
+                <Link href={`/schedule?purpose=${service.offers[0]}`} className="mt-auto w-full text-center bg-red-950 rounded shadow text-white px-3 py-2 ">Inqure Now</Link>
               </div>
-              <h2 className="text-xl font-bold text-black/95 mb-3">
-                {service.name}
-              </h2>
-              <p className="text-gray-500 text-sm mb-4">
-                {service.description}
-              </p>
-
-              <ul className="space-y-2 text-sm text-gray-700">
-                {service.offers.map((offer, index) => (
-                  <li key={index} className="flex items-center">
-                    <svg
-                      className="h-4 w-4 text-green-500 mr-2 flex-shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    {offer}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Call-to-Action Section */}
@@ -133,6 +158,22 @@ export default function App() {
           </div>
         </div>
       </div>
+      {/* Development Phase Warning */}
+{showWarning && (
+  <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded-md shadow-lg z-50 flex items-start max-w-xs">
+    <div className="flex-1 text-sm">
+      ⚠️ This website is currently in development.  
+      All products & services shown are placeholders only, and NOT actual products of SR-5 Trading Corporation.
+    </div>
+    <button
+      onClick={() => setShowWarning(false)}
+      className="ml-3 text-red-800 hover:text-red-900"
+    >
+      ✕
+    </button>
+  </div>
+)}
+
     </div>
   );
 }

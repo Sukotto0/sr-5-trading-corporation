@@ -17,6 +17,9 @@ import {
   XMarkIcon,
   ChevronDownIcon,
   CubeTransparentIcon,
+  ShoppingCartIcon,
+  EyeIcon,
+  ArrowTrendingUpIcon
 } from "@heroicons/react/24/outline";
 import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
@@ -90,9 +93,9 @@ export default function NavbarDefault() {
           <Link href="/" className="text-sm font-semibold text-white">
             Home
           </Link>
-          <Popover className="relative">
+          {/* <Popover className="relative">
             <PopoverButton className="flex items-center gap-x-1 text-sm font-semibold text-white">
-              Browse
+              Products
               <ChevronDownIcon className="h-5 w-5 text-gray-300" />
             </PopoverButton>
             <PopoverPanel className="absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 rounded-3xl bg-white shadow-lg p-4">
@@ -103,27 +106,48 @@ export default function NavbarDefault() {
                   className="group flex items-center gap-x-4 rounded-lg p-3 hover:bg-white/5"
                 >
                   <item.icon className="h-6 w-6 text-green-800 group-hover:text-black/50" />
-                  <span className="font-semibold text-black/80 group-hover:text-black/50">{item.name}</span>
+                  <span className="font-semibold text-black/80 group-hover:text-black/50">
+                    {item.name}
+                  </span>
                 </Link>
               ))}
             </PopoverPanel>
-          </Popover>
+          </Popover> */}
+          <Link href="/browse/trucks" className="text-sm font-semibold text-white">
+            Products
+          </Link>
           <Link href="/services" className="text-sm font-semibold text-white">
             Services
           </Link>
-          <Link href="/transactions" className="text-sm font-semibold text-white">
+          {/* <Link
+            href="/transactions"
+            className="text-sm font-semibold text-white"
+          >
             Transactions
-          </Link>
-          <Link href="/feedback" className="text-sm font-semibold text-white">
+          </Link> */}
+          {/* <Link href="/feedback" className="text-sm font-semibold text-white">
             Feedback
-          </Link>
+          </Link> */}
           <Link href="/schedule" className="text-sm font-semibold text-white">
             Schedule
           </Link>
           <Link href="/cart" className="text-sm font-semibold text-white">
-            Cart
+            <ShoppingCartIcon className="size-6 " />
           </Link>
-          <UserButton />
+          <UserButton>
+            <UserButton.MenuItems>
+              <UserButton.Link
+                label="Transactions"
+                labelIcon={<ArrowTrendingUpIcon />}
+                href="/transactions"
+              />
+              <UserButton.Link
+                label="Feedback"
+                labelIcon={<EyeIcon />}
+                href="/feedback"
+              />
+            </UserButton.MenuItems>
+          </UserButton>
         </PopoverGroup>
       </nav>
 

@@ -5,12 +5,13 @@ import {
   MapPinIcon,
   TagIcon,
 } from "@heroicons/react/24/outline";
-import { createReservation, getProduct } from "@/app/actions";
+import { addToCart, createReservation, getProduct } from "@/app/actions";
 import { Product } from "@/hooks/useQuery";
 import Image from "next/image";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { Boxes, Lock, MinusIcon, PlusIcon } from "lucide-react";
+import { ArrowLeftCircle, Boxes, Lock, MinusIcon, PlusIcon } from "lucide-react";
 import { ClipLoader, PuffLoader } from "react-spinners";
+import { Button } from "@/components/ui/button";
 
 export default function Browse({
   params,
@@ -18,11 +19,8 @@ export default function Browse({
   params: Promise<{ slug: string }>;
 }) {
   const [initialLoad, setInitialLoad] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [addToCartLoading, setAddToCartLoading] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
-  const [reservationFee, setReservationFee] = useState(0);
-  const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState<"reserve" | "book" | null>(null);
   const [quantity, setQuantity] = useState(1);
   const { slug } = use(params);
 
@@ -32,28 +30,31 @@ export default function Browse({
     async function fetchProduct() {
       const fetchedProduct = await getProduct(slug);
       setProduct(fetchedProduct.data || null);
-      setReservationFee((fetchedProduct.data?.price || 0) * 0.05);
       setInitialLoad(false);
     }
     fetchProduct();
   }, [slug]);
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleAddToCart = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    const formData = new FormData(e.target as HTMLFormElement);
-    formData.append("productName", product?.name || "");
+    setAddToCartLoading(true);
+
+    const formData = new FormData();
     formData.append("productId", slug);
+    formData.append("productName", product?.name || "");
     formData.append("userId", user?.id || "");
-    formData.append("reservationFee", reservationFee.toString());
-    formData.append("productPrice", product?.price.toString() || "0");
+    formData.append("price", product?.price.toString() || "0");
+    formData.append("quantity", quantity.toString());
+    formData.append("imageUrl", product?.imageUrl || "");
 
-    if (modalType === "reserve") {
-      const data = await createReservation(formData);
-
-      window.open(data.redirectUrl, "_blank")?.focus();
-      setIsSubmitting(false);
+    console.log("Add to cart:", Object.fromEntries(formData.entries()));
+    const response = await addToCart(Object.fromEntries(formData.entries()));
+    if (response.success) {
+      setAddToCartLoading(false);
+      alert("Item added to cart successfully!");
+    } else {
+      setAddToCartLoading(false);
+      alert("Failed to add item to cart.");
     }
   };
 
@@ -86,8 +87,12 @@ export default function Browse({
   return (
     <>
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto ">
+          <Button onClick={() => history.back()} className="mb-4 bg-red-900 hover:cursor-pointer"><ArrowLeftCircle /> Go back</Button>
+        </div>
         <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
           <div className="lg:grid lg:grid-cols-2 lg:gap-12 p-8 sm:p-12">
+            
             <div className="lg:col-span-1 mb-8 lg:mb-0">
               <div className="w-full aspect-w-4 aspect-h-3 rounded-xl overflow-hidden shadow-xl">
                 <Image
@@ -134,9 +139,17 @@ export default function Browse({
               </p>
 
               <div className="flex flex-col flex-wrap w-fit py-2 rounded-xl gap-3 mb-6">
-                <span className="text-black text-lg font-semibold">Quantity:</span>
+                <span className="text-black text-lg font-semibold">
+                  Quantity:
+                </span>
                 <div className="flex flex-row items-center w-fit rounded-lg">
-                  <button onClick={() => quantity + 1 <= (product.quantity || 0) && setQuantity(quantity + 1)} className="hover:bg-black/30 bg-black/10 px-3 py-2 rounded-l-lg">
+                  <button
+                    onClick={() =>
+                      quantity + 1 <= (product.quantity || 0) &&
+                      setQuantity(quantity + 1)
+                    }
+                    className="hover:bg-black/30 bg-black/10 px-3 py-2 rounded-l-lg"
+                  >
                     <PlusIcon />
                   </button>
                   <input
@@ -145,10 +158,22 @@ export default function Browse({
                     id="quantity"
                     min="1"
                     value={quantity}
-                    onChange={(e) => setQuantity(Math.min(Math.max(1, parseInt(e.target.value) || 1), product.quantity || 1))}
-                    className="w-16 [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none text-center bg-white px-3 py-2 border"
+                    onChange={(e) =>
+                      setQuantity(
+                        Math.min(
+                          Math.max(1, parseInt(e.target.value) || 1),
+                          product.quantity || 1
+                        )
+                      )
+                    }
+                    className="w-16 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none text-center bg-white px-3 py-2 border"
                   />
-                  <button onClick={() => quantity - 1 > 0 && setQuantity(quantity - 1)} className="hover:bg-black/30 bg-black/10 px-3 py-2 rounded-r-lg">
+                  <button
+                    onClick={() =>
+                      quantity - 1 > 0 && setQuantity(quantity - 1)
+                    }
+                    className="hover:bg-black/30 bg-black/10 px-3 py-2 rounded-r-lg"
+                  >
                     <MinusIcon />
                   </button>
                 </div>
@@ -156,8 +181,16 @@ export default function Browse({
               <div className="grid xl:grid-cols-2 gap-4 mb-4">
                 {isSignedIn ? (
                   <>
-                    <button className="flex items-center justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition duration-300 transform hover:scale-[1.01]">
-                      <ShoppingBagIcon className="w-6 h-6 mr-3" />
+                    <button
+                      className="flex items-center justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition duration-300 transform hover:scale-[1.01]"
+                      onClick={handleAddToCart}
+                      disabled={addToCartLoading}
+                    >
+                      {addToCartLoading ? (
+                        <ClipLoader color="white" size={20} className="w-6 h-6 mr-3"/>
+                      ) : (
+                        <ShoppingBagIcon className="w-6 h-6 mr-3" />
+                      )}
                       Add to Cart
                     </button>
                     <button className="flex items-center justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-red-900 hover:bg-red-950 transition duration-300 transform hover:scale-[1.01]">

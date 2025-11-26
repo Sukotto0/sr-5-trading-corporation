@@ -10,6 +10,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import Link from "next/link";
 
 const Dashboard = () => {
   const autoplayPlugin = useRef(
@@ -23,27 +24,30 @@ const Dashboard = () => {
     {
       id: 1,
       image: "/images/HeroBanner1.jpg",
-      title: "Welcome to Our Community",
+      title: "Welcome to SR-5 Trading Corporation",
       subtitle:
-        "Empowering growth, innovation, and collaboration across all fields.",
+        "IMPORTER • REBUILDER • DEALER",
     },
     {
       id: 2,
       image: "/images/HeroBanner2.jpg",
-      title: "Innovation That Inspires",
-      subtitle: "We push boundaries and deliver outstanding experiences.",
+      title: "Browse Our Products",
+      subtitle: "Explore Our Latest Inventory.",
+      link: "/browse/trucks",
     },
     {
       id: 3,
       image: "/images/HeroBanner3.jpg",
-      title: "Building Stronger Communities",
-      subtitle: "Join us as we grow and achieve new milestones together.",
+      title: "Services we Offer",
+      subtitle: "We Offer Automotive Sevices.",
+      link: "/services",
     },
     {
       id: 4,
       image: "/images/HeroBanner4.jpg",
-      title: "Empowering Local Initiatives",
-      subtitle: "Supporting grassroots movements for a better tomorrow.",
+      title: "Come Visit Us",
+      subtitle: "Visit One Of Our Branches.",
+      link: "/schedule",
     },
   ];
 
@@ -140,9 +144,17 @@ const Dashboard = () => {
                   <h1 className="text-5xl md:text-6xl font-extrabold mb-4">
                     {slide.title}
                   </h1>
-                  <p className="text-lg md:text-xl max-w-2xl mx-auto">
+                  <p className="text-lg md:text-xl max-w-2xl mx-auto mb-4">
                     {slide.subtitle}
                   </p>
+                  {slide.link && (
+                    <Link
+                      href={slide.link}
+                      className="px-3 py-2 bg-white/95 rounded shadow text-black/95"
+                    >
+                      Go now
+                    </Link>
+                  )}
                 </div>
               </CarouselItem>
             ))}
@@ -153,7 +165,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats */}
-      <div className="w-full max-w-6xl px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 -mt-12 relative z-10">
+      <div className="w-full px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 -mt-12 relative z-10">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
@@ -207,9 +219,7 @@ const Dashboard = () => {
             >
               <button
                 className="flex justify-between items-center w-full text-left font-semibold text-lg text-gray-800"
-                onClick={() =>
-                  setActiveFAQ(activeFAQ === idx ? null : idx)
-                }
+                onClick={() => setActiveFAQ(activeFAQ === idx ? null : idx)}
               >
                 {faq.question}
                 <ChevronDown
@@ -229,46 +239,6 @@ const Dashboard = () => {
       </div>
 
       {/* Contact Details */}
-      <div className="w-full max-w-5xl px-6 py-16">
-        <h1 className="text-4xl font-extrabold text-center mb-8">Contact Us</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center">
-            <h2 className="text-2xl font-bold mb-2 text-blue-600">Cavite</h2>
-            <p className="text-lg text-gray-700 mb-1">+63 969 272 7377</p>
-            <p className="text-lg text-gray-700 mb-1">+63 917 556 1897</p>
-            <h3 className="text-lg font-semibold mt-4 mb-1 text-gray-800">
-              Bacoor Branch
-            </h3>
-            <p className="text-gray-600 text-center mb-2">
-              Reveal Subdivision Real 1 Bacoor Cavite 4102
-            </p>
-            <h3 className="text-lg font-semibold mb-1 text-gray-800">
-              Imus Branch
-            </h3>
-            <p className="text-gray-600 text-center">
-              Sanchez Compound Bayan Luma 7 Imus Cavite 4103
-            </p>
-          </div>
-          <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center">
-            <h2 className="text-2xl font-bold mb-2 text-green-600">Bicol</h2>
-            <p className="text-lg text-gray-700 mb-1">+63 917 710 4758</p>
-            <p className="text-lg text-gray-700 mb-1">+63 917 575 8157</p>
-            <p className="text-lg text-gray-700 mb-1">+63 917 556 1897</p>
-            <h3 className="text-lg font-semibold mt-4 mb-1 text-gray-800">
-              Warehouse
-            </h3>
-            <p className="text-gray-600 text-center mb-2">
-              Purok 1 Malabog Maharlika Highway Daraga Albay 4501
-            </p>
-            <h3 className="text-lg font-semibold mb-1 text-gray-800">
-              Main Branch
-            </h3>
-            <p className="text-gray-600 text-center">
-              Purok 1 Barangay Ilawod Maharlika Highway Camalig Albay 4502
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

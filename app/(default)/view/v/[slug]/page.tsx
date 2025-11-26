@@ -9,8 +9,9 @@ import { createReservation, getProduct } from "@/app/actions";
 import { Product } from "@/hooks/useQuery";
 import Image from "next/image";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { Boxes, Lock } from "lucide-react";
+import { ArrowLeftCircle, Boxes, Lock } from "lucide-react";
 import { ClipLoader, PuffLoader } from "react-spinners";
+import { Button } from "@/components/ui/button";
 
 export default function Browse({
   params,
@@ -96,6 +97,9 @@ export default function Browse({
   return (
     <>
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto ">
+          <Button onClick={() => history.back()} className="mb-4 bg-red-900 hover:cursor-pointer"><ArrowLeftCircle /> Go back</Button>
+        </div>
         <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
           <div className="lg:grid lg:grid-cols-2 lg:gap-12 p-8 sm:p-12">
             <div className="lg:col-span-1 mb-8 lg:mb-0">
