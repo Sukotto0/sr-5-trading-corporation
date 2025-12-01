@@ -120,7 +120,7 @@ export default function App() {
                     </li>
                   ))}
                 </ul>
-                <Link href={`/schedule?purpose=${service.offers[0]}`} className="mt-auto w-full text-center bg-red-950 rounded shadow text-white px-3 py-2 ">Inqure Now</Link>
+                <Link href={`/schedule?purpose=${service.offers[0]}`} className="mt-auto w-full text-center bg-red-950 rounded shadow text-white px-3 py-2 ">Inquire Now</Link>
               </div>
             );
           })}

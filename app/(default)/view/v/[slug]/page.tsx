@@ -1,19 +1,34 @@
 "use client";
 import React, { use, useEffect, useState } from "react";
-import {
-  ShoppingBagIcon,
-  MapPinIcon,
-  TagIcon,
-} from "@heroicons/react/24/outline";
 import { createReservation, getProduct } from "@/app/actions";
 import { Product } from "@/hooks/useQuery";
 import Image from "next/image";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { ArrowLeftCircle, Boxes, Lock } from "lucide-react";
-import { ClipLoader, PuffLoader } from "react-spinners";
+import { 
+  ArrowLeft, 
+  Package, 
+  MapPin, 
+  Tag, 
+  ShoppingCart, 
+  Lock,
+  CalendarDays,
+  Truck,
+  Shield,
+  RefreshCw,
+  Car,
+  X
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 
-export default function Browse({
+export default function VehicleDetail({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -68,277 +83,433 @@ export default function Browse({
     }
   };
 
+  const isOutOfStock = !!(product && product.quantity === 0);
+
+  // Loading state
+  if (initialLoad) {
+    return (
+      <div className="min-h-screen bg-background py-8">
+        <div className="container mx-auto px-4">
+          <Skeleton className="h-6 w-40 mb-6" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <Skeleton className="aspect-square w-full rounded-lg" />
+            </div>
+            <div className="space-y-6">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-6 w-1/4" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+              <Skeleton className="h-12 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Product not found
   if (!product) {
-    if (initialLoad) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-white p-6">
-          <div className="text-center p-8 flex flex-col gap-4">
-            <PuffLoader />
-            <p className="text-gray-600">Loading</p>
-          </div>
-        </div>
-      );
-    } else {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-          <div className="text-center p-8 bg-white rounded-xl shadow-lg">
-            <h1 className="text-2xl font-bold text-red-600 mb-2">
-              Product Not Found
-            </h1>
-            <p className="text-gray-600">
-              The item with id "{slug}" could not be located.
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <CardTitle className="text-xl font-bold text-destructive mb-2">
+              Vehicle Not Found
+            </CardTitle>
+            <p className="text-muted-foreground mb-4">
+              The vehicle with ID "{slug}" could not be located.
             </p>
-          </div>
-        </div>
-      );
-    }
+            <Button onClick={() => history.back()} variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto ">
-          <Button onClick={() => history.back()} className="mb-4 bg-red-900 hover:cursor-pointer"><ArrowLeftCircle /> Go back</Button>
-        </div>
-        <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
-          <div className="lg:grid lg:grid-cols-2 lg:gap-12 p-8 sm:p-12">
-            <div className="lg:col-span-1 mb-8 lg:mb-0">
-              <div className="w-full aspect-w-4 aspect-h-3 rounded-xl overflow-hidden shadow-xl">
-                <Image
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className="w-full h-full object-cover object-center"
-                  width={600}
-                  height={400}
-                />
-              </div>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          {/* Breadcrumb Navigation */}
+          <div className="mb-6">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href={`/browse/${product.category}`}>
+                    {product.category?.charAt(0).toUpperCase() + product.category?.slice(1)}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem className="text-muted-foreground">
+                  {product.name}
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
 
-              <div className="mt-6 space-y-3">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Boxes className="w-5 h-5 mr-2 text-emerald-600" />
-                  <span className="font-medium text-gray-700 capitalize">
-                    In Stock: {product.quantity}
-                  </span>
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <TagIcon className="w-5 h-5 mr-2 text-emerald-600" />
-                  <span className="font-medium text-gray-700 capitalize">
-                    Category: {product.category}
-                  </span>
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <MapPinIcon className="w-5 h-5 mr-2 text-emerald-600" />
-                  <span className="font-medium text-gray-700">
-                    Available at:{" "}
-                    <span className="capitalize">{product.location}</span>
-                  </span>
-                </div>
+          {/* Back Button */}
+          <Button 
+            variant="outline" 
+            onClick={() => history.back()} 
+            className="mb-6"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Product Image */}
+            <div className="space-y-4">
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="aspect-square relative overflow-hidden">
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      className="object-cover transition-transform duration-300 hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Product Details Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="flex items-center p-4">
+                    <Package className="h-5 w-5 mr-3 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">Stock</p>
+                      <p className="text-xs text-muted-foreground">
+                        {product.quantity} available
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="flex items-center p-4">
+                    <Tag className="h-5 w-5 mr-3 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">Category</p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {product.category}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="flex items-center p-4">
+                    <MapPin className="h-5 w-5 mr-3 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium">Location</p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {product.location}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
 
-            <div className="lg:col-span-1">
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
-                {product.name}
-              </h1>
+            {/* Product Information */}
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight mb-4">
+                  {product.name}
+                </h1>
+                
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="text-3xl font-bold text-primary">
+                    ₱{typeof product.price === "number" 
+                      ? product.price.toLocaleString() 
+                      : "Price Unavailable"}
+                  </div>
+                  <Badge 
+                    variant={isOutOfStock ? "destructive" : "default"}
+                    className="text-sm"
+                  >
+                    {isOutOfStock ? "Out of Stock" : "Available"}
+                  </Badge>
+                </div>
+              </div>
 
-              <p className="text-4xl font-bold text-emerald-600 mb-6 border-b border-gray-200 pb-4">
-                {typeof product.price === "number"
-                  ? `₱${product.price.toFixed(2)}`
-                  : "Price Unavailable"}
-              </p>
+              <Separator />
 
-              <div className="grid xl:grid-cols-2 gap-4 mb-4">
+              {/* Action Buttons */}
+              <div className="space-y-3">
                 {isSignedIn ? (
                   <>
-                    <button
+                    <Button
+                      className="w-full"
+                      size="lg"
                       onClick={() => handleOpenModal("reserve")}
-                      className="flex items-center justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition duration-300 transform hover:scale-[1.01]"
+                      disabled={isOutOfStock}
                     >
-                      <ShoppingBagIcon className="w-6 h-6 mr-3" />
-                      Reserve Unit
-                    </button>
-                    <button
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      {isOutOfStock ? "Out of Stock" : "Reserve Unit"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="w-full"
                       onClick={() => handleOpenModal("book")}
-                      className="flex items-center justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-red-900 hover:bg-red-950 transition duration-300 transform hover:scale-[1.01]"
+                      disabled={isOutOfStock}
                     >
-                      <ShoppingBagIcon className="w-6 h-6 mr-3" />
-                      Book a Test Drive
-                    </button>
+                      <Car className="h-5 w-5 mr-2" />
+                      Book Test Drive
+                    </Button>
                   </>
                 ) : (
                   <SignInButton mode="modal">
-                    <button className="flex items-center xl:col-span-2 justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-red-900 hover:bg-red-950 transition duration-300 transform hover:scale-[1.01]">
-                      <Lock className="w-6 h-6 mr-3" />
+                    <Button size="lg" className="w-full">
+                      <Lock className="h-5 w-5 mr-2" />
                       Sign In to Continue
-                    </button>
+                    </Button>
                   </SignInButton>
                 )}
               </div>
 
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900 border-b pb-2">
-                  Product Overview
-                </h2>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {product.description}
-                </p>
-              </div>
+              {/* Features */}
+              {/* <div className="grid grid-cols-3 gap-4">
+                <div className="flex items-center space-x-2 text-sm">
+                  <Truck className="h-4 w-4 text-primary" />
+                  <span>Free Delivery</span>
+                </div>
+                <div className="flex items-center space-x-2 text-sm">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <span>Warranty</span>
+                </div>
+                <div className="flex items-center space-x-2 text-sm">
+                  <RefreshCw className="h-4 w-4 text-primary" />
+                  <span>Easy Returns</span>
+                </div>
+              </div> */}
+
+              {/* Reservation Fee Info */}
+              <Card>
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Reservation Fee (5%)</span>
+                      <span className="font-medium">₱{reservationFee.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Balance on Claiming</span>
+                      <span className="font-medium">₱{(product.price - reservationFee).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+          </div>
+
+          {/* Product Details Tabs */}
+          <div className="mt-12">
+            <Tabs defaultValue="description" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="description">Description</TabsTrigger>
+                <TabsTrigger value="specifications">Specifications</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="description" className="mt-6">
+                <Card className="py-6">
+                  <CardHeader>
+                    <CardTitle>Vehicle Description</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                      {product.description || "No description available for this vehicle."}
+                    </p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="specifications" className="mt-6">
+                <Card className="py-6">
+                  <CardHeader>
+                    <CardTitle>Specifications</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-medium">Category</span>
+                        <span className="text-muted-foreground capitalize">{product.category}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-medium">Location</span>
+                        <span className="text-muted-foreground capitalize">{product.location}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-medium">Stock Quantity</span>
+                        <span className="text-muted-foreground">{product.quantity}</span>
+                      </div>
+                      <div className="flex justify-between py-2">
+                        <span className="font-medium">Reservation Fee</span>
+                        <span className="text-muted-foreground">5% of total price</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg animate-fadeIn">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-              {modalType === "reserve"
-                ? "Reserve Your Unit"
-                : "Book a Test Drive"}
-            </h2>
-            <form className="space-y-4" onSubmit={handleFormSubmit}>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="firstName"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    First Name
-                  </label>
-                  <input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    defaultValue={user?.firstName ?? ""}
-                    placeholder="First Name"
-                    className="border rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-emerald-500 outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="lastName"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Last Name
-                  </label>
-                  <input
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    defaultValue={user?.lastName ?? ""}
-                    placeholder="Last Name"
-                    className="border rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-emerald-500 outline-none"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="mt-3">
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Contact Number
-                </label>
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="Contact Number"
-                  className="border rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-emerald-500 outline-none"
-                  required
-                />
-              </div>
-
-              <div className="mt-3">
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Email Address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  defaultValue={user?.primaryEmailAddress?.emailAddress ?? ""}
-                  placeholder="Email Address"
-                  className="border rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-emerald-500 outline-none"
-                  required
-                />
-              </div>
-
-              <div className="mt-3">
-                <label
-                  htmlFor="appointment"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Preferred Date & Time of{" "}
-                  {modalType === "reserve" ? "Claiming" : "Test Drive"}
-                </label>
-                <input
-                  id="appointment"
-                  name="appointment"
-                  type="datetime-local"
-                  className="border rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-emerald-500 outline-none"
-                  required
-                />
-              </div>
-
-              {modalType === "reserve" && (
-                <>
-                  <hr className="mt-4" />
-                  <div className="w-fit">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {product.name}
-                    </h3>
-                    <h2 className="text-normal text-gray-900 mb-2">
-                      Reservation Fee: ₱{reservationFee.toFixed(2)}
-                    </h2>
-                    <h2 className="text-normal text-gray-900 mb-2">
-                      Pay upon claiming: ₱
-                      {(product.price - reservationFee).toFixed(2)}
-                    </h2>
-                    <hr />
-                    <p className="text-sm text-gray-600 mt-2">
-                      * A 5% reservation fee is required to secure your unit.
-                      The remaining balance will be due upon claiming the
-                      product.
-                    </p>
-                    <p className="text-sm text-gray-600 mt-2">
-                      * The reservation fee is non-refundable.
-                    </p>
-                    <p className="text-sm text-gray-600 mt-2">
-                      * Failure to claim your unit within 1 week of the
-                      specified time will result in the forfeiture of your
-                      reservation.
-                    </p>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 p-4">
+          <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto py-6">
+            <CardHeader className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0"
+                onClick={handleCloseModal}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <CardTitle className="text-center pr-8">
+                {modalType === "reserve" ? "Reserve Your Vehicle" : "Book a Test Drive"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4" onSubmit={handleFormSubmit}>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      defaultValue={user?.firstName ?? ""}
+                      placeholder="First Name"
+                      required
+                    />
                   </div>
-                </>
-              )}
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="px-5 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className={`px-5 py-2 rounded-lg text-white font-semibold transition flex flex-row items-center gap-2 ${
-                    modalType === "reserve"
-                      ? "bg-emerald-600 hover:bg-emerald-700"
-                      : "bg-red-900 hover:bg-red-950"
-                  }`}
-                >
-                  {isSubmitting && <ClipLoader size={18} color="#ffffff" />}
-                  {modalType === "reserve" ? "Reserve Now" : "Book Now"}
-                </button>
-              </div>
-            </form>
-          </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      defaultValue={user?.lastName ?? ""}
+                      placeholder="Last Name"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Contact Number</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="Contact Number"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    defaultValue={user?.primaryEmailAddress?.emailAddress ?? ""}
+                    placeholder="Email Address"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="appointment">
+                    Preferred Date & Time of {modalType === "reserve" ? "Claiming" : "Test Drive"}
+                  </Label>
+                  <Input
+                    id="appointment"
+                    name="appointment"
+                    type="datetime-local"
+                    min={(() => {
+                      const tomorrow = new Date();
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      return tomorrow.toISOString().slice(0, 16);
+                    })()}
+                    required
+                  />
+                </div>
+
+                {modalType === "reserve" && (
+                  <>
+                    <Separator className="my-4" />
+                    <Card className="py-6">
+                      <CardHeader>
+                        <CardTitle className="text-lg">{product.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex justify-between">
+                          <span>Reservation Fee:</span>
+                          <span className="font-medium">₱{reservationFee.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Pay upon claiming:</span>
+                          <span className="font-medium">₱{(product.price - reservationFee).toLocaleString()}</span>
+                        </div>
+                        <Separator />
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p>• A 5% reservation fee is required to secure your vehicle.</p>
+                          <p>• The remaining balance will be due upon claiming.</p>
+                          <p>• The reservation fee is non-refundable.</p>
+                          <p>• Failure to claim within 1 week will result in forfeiture.</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCloseModal}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1"
+                    variant={modalType === "reserve" ? "default" : "secondary"}
+                  >
+                    {isSubmitting ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : modalType === "reserve" ? (
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                    ) : (
+                      <CalendarDays className="h-4 w-4 mr-2" />
+                    )}
+                    {modalType === "reserve" ? "Reserve Now" : "Book Now"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       )}
     </>

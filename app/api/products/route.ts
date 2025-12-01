@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get("sortBy") || "relevance";
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
+    const search = searchParams.get("search");
 
     try {
       const client = await clientPromise;
@@ -61,6 +62,19 @@ export async function GET(request: NextRequest) {
         const min = minPrice ? parseFloat(minPrice) : 0;
         const max = maxPrice ? parseFloat(maxPrice) : Infinity;
         return price >= min && price <= max;
+      });
+    }
+
+    // Apply search filter
+    if (search) {
+      const searchTerm = search.toLowerCase().trim();
+      filteredProducts = filteredProducts.filter((product) => {
+        return (
+          product.name.toLowerCase().includes(searchTerm) ||
+          product.description.toLowerCase().includes(searchTerm) ||
+          product.category.toLowerCase().includes(searchTerm) ||
+          product.branch.toLowerCase().includes(searchTerm)
+        );
       });
     }
 

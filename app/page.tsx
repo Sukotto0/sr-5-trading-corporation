@@ -11,8 +11,10 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import Link from "next/link";
+import { SignInButton, useUser } from "@clerk/nextjs";
 
 const Dashboard = () => {
+  const { isSignedIn } = useUser();
   const autoplayPlugin = useRef(
     Autoplay({ delay: 4000, stopOnInteraction: true })
   );
@@ -25,8 +27,7 @@ const Dashboard = () => {
       id: 1,
       image: "/images/HeroBanner1.jpg",
       title: "Welcome to SR-5 Trading Corporation",
-      subtitle:
-        "IMPORTER • REBUILDER • DEALER",
+      subtitle: "IMPORTER • REBUILDER • DEALER",
     },
     {
       id: 2,
@@ -147,13 +148,21 @@ const Dashboard = () => {
                   <p className="text-lg md:text-xl max-w-2xl mx-auto mb-4">
                     {slide.subtitle}
                   </p>
-                  {slide.link && (
-                    <Link
-                      href={slide.link}
-                      className="px-3 py-2 bg-white/95 rounded shadow text-black/95"
-                    >
-                      Go now
-                    </Link>
+                  {slide.link && !isSignedIn && slide.link == "/schedule" ? (
+                    <SignInButton mode="modal">
+                      <div className="px-3 py-2 bg-white/95 rounded shadow text-black/95 hover:cursor-pointer hover:bg-white/85">
+                        Go now
+                      </div>
+                    </SignInButton>
+                  ) : (
+                    slide.link && (
+                      <Link
+                        href={slide.link}
+                        className="px-3 py-2 bg-white/95 rounded shadow text-black/95"
+                      >
+                        Go now
+                      </Link>
+                    )
                   )}
                 </div>
               </CarouselItem>

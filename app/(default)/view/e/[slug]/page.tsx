@@ -1,19 +1,33 @@
 "use client";
 import React, { use, useEffect, useState } from "react";
-import {
-  ShoppingBagIcon,
-  MapPinIcon,
-  TagIcon,
-} from "@heroicons/react/24/outline";
-import { addToCart, createReservation, getProduct } from "@/app/actions";
+import { addToCart, getProduct } from "@/app/actions";
 import { Product } from "@/hooks/useQuery";
 import Image from "next/image";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { ArrowLeftCircle, Boxes, Lock, MinusIcon, PlusIcon } from "lucide-react";
-import { ClipLoader, PuffLoader } from "react-spinners";
+import { 
+  ArrowLeft, 
+  Package, 
+  MapPin, 
+  Tag, 
+  Minus, 
+  Plus, 
+  ShoppingCart, 
+  Lock,
+  Truck,
+  Shield,
+  RefreshCw
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 
-export default function Browse({
+export default function ProductDetail({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -58,168 +72,327 @@ export default function Browse({
     }
   };
 
-  if (!product) {
-    if (initialLoad) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-white p-6">
-          <div className="text-center p-8 flex flex-col gap-4">
-            <PuffLoader />
-            <p className="text-gray-600">Loading</p>
-          </div>
-        </div>
-      );
-    } else {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-          <div className="text-center p-8 bg-white rounded-xl shadow-lg">
-            <h1 className="text-2xl font-bold text-red-600 mb-2">
-              Product Not Found
-            </h1>
-            <p className="text-gray-600">
-              The item with id "{slug}" could not be located.
-            </p>
-          </div>
-        </div>
-      );
+  const handleQuantityChange = (change: number) => {
+    const newQuantity = quantity + change;
+    if (newQuantity >= 1 && newQuantity <= (product?.quantity || 1)) {
+      setQuantity(newQuantity);
     }
-  }
+  };
 
-  return (
-    <>
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto ">
-          <Button onClick={() => history.back()} className="mb-4 bg-red-900 hover:cursor-pointer"><ArrowLeftCircle /> Go back</Button>
-        </div>
-        <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
-          <div className="lg:grid lg:grid-cols-2 lg:gap-12 p-8 sm:p-12">
-            
-            <div className="lg:col-span-1 mb-8 lg:mb-0">
-              <div className="w-full aspect-w-4 aspect-h-3 rounded-xl overflow-hidden shadow-xl">
-                <Image
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className="w-full h-full object-cover object-center"
-                  width={600}
-                  height={400}
-                />
-              </div>
+  const isOutOfStock = !!(product && product.quantity === 0);
 
-              <div className="mt-6 space-y-3">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Boxes className="w-5 h-5 mr-2 text-emerald-600" />
-                  <span className="font-medium text-gray-700 capitalize">
-                    In Stock: {product.quantity}
-                  </span>
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <TagIcon className="w-5 h-5 mr-2 text-emerald-600" />
-                  <span className="font-medium text-gray-700 capitalize">
-                    Category: {product.category}
-                  </span>
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <MapPinIcon className="w-5 h-5 mr-2 text-emerald-600" />
-                  <span className="font-medium text-gray-700">
-                    Available at:{" "}
-                    <span className="capitalize">{product.location}</span>
-                  </span>
-                </div>
-              </div>
+  // Loading state
+  if (initialLoad) {
+    return (
+      <div className="min-h-screen bg-background py-8">
+        <div className="container mx-auto px-4">
+          <Skeleton className="h-6 w-40 mb-6" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <Skeleton className="aspect-square w-full rounded-lg" />
             </div>
-
-            <div className="lg:col-span-1">
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
-                {product.name}
-              </h1>
-
-              <p className="text-4xl font-bold text-emerald-600 mb-6 border-b border-gray-200 pb-4">
-                {typeof product.price === "number"
-                  ? `₱${product.price.toFixed(2)}`
-                  : "Price Unavailable"}
-              </p>
-
-              <div className="flex flex-col flex-wrap w-fit py-2 rounded-xl gap-3 mb-6">
-                <span className="text-black text-lg font-semibold">
-                  Quantity:
-                </span>
-                <div className="flex flex-row items-center w-fit rounded-lg">
-                  <button
-                    onClick={() =>
-                      quantity + 1 <= (product.quantity || 0) &&
-                      setQuantity(quantity + 1)
-                    }
-                    className="hover:bg-black/30 bg-black/10 px-3 py-2 rounded-l-lg"
-                  >
-                    <PlusIcon />
-                  </button>
-                  <input
-                    type="number"
-                    name="quantity"
-                    id="quantity"
-                    min="1"
-                    value={quantity}
-                    onChange={(e) =>
-                      setQuantity(
-                        Math.min(
-                          Math.max(1, parseInt(e.target.value) || 1),
-                          product.quantity || 1
-                        )
-                      )
-                    }
-                    className="w-16 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none text-center bg-white px-3 py-2 border"
-                  />
-                  <button
-                    onClick={() =>
-                      quantity - 1 > 0 && setQuantity(quantity - 1)
-                    }
-                    className="hover:bg-black/30 bg-black/10 px-3 py-2 rounded-r-lg"
-                  >
-                    <MinusIcon />
-                  </button>
-                </div>
+            <div className="space-y-6">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-6 w-1/4" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
               </div>
-              <div className="grid xl:grid-cols-2 gap-4 mb-4">
-                {isSignedIn ? (
-                  <>
-                    <button
-                      className="flex items-center justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition duration-300 transform hover:scale-[1.01]"
-                      onClick={handleAddToCart}
-                      disabled={addToCartLoading}
-                    >
-                      {addToCartLoading ? (
-                        <ClipLoader color="white" size={20} className="w-6 h-6 mr-3"/>
-                      ) : (
-                        <ShoppingBagIcon className="w-6 h-6 mr-3" />
-                      )}
-                      Add to Cart
-                    </button>
-                    <button className="flex items-center justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-red-900 hover:bg-red-950 transition duration-300 transform hover:scale-[1.01]">
-                      <ShoppingBagIcon className="w-6 h-6 mr-3" />
-                      Buy Now
-                    </button>
-                  </>
-                ) : (
-                  <SignInButton mode="modal">
-                    <button className="flex items-center xl:col-span-2 justify-center w-full py-3 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-red-900 hover:bg-red-950 transition duration-300 transform hover:scale-[1.01]">
-                      <Lock className="w-6 h-6 mr-3" />
-                      Sign In to Continue
-                    </button>
-                  </SignInButton>
-                )}
-              </div>
-
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900 border-b pb-2">
-                  Product Overview
-                </h2>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {product.description}
-                </p>
-              </div>
+              <Skeleton className="h-12 w-full" />
             </div>
           </div>
         </div>
       </div>
-    </>
+    );
+  }
+
+  // Product not found
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <CardTitle className="text-xl font-bold text-destructive mb-2">
+              Product Not Found
+            </CardTitle>
+            <p className="text-muted-foreground mb-4">
+              The item with ID "{slug}" could not be located.
+            </p>
+            <Button onClick={() => history.back()} variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb Navigation */}
+        <div className="mb-6">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/">Home</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink href={`/browse/${product.category}`}>
+                  {product.category?.charAt(0).toUpperCase() + product.category?.slice(1)}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem className="text-muted-foreground">
+                {product.name}
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+
+        {/* Back Button */}
+        <Button 
+          variant="outline" 
+          onClick={() => history.back()} 
+          className="mb-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Product Image */}
+          <div className="space-y-4">
+            <Card className="overflow-hidden py-0">
+              <CardContent className="p-0">
+                <div className="aspect-square relative overflow-hidden">
+                  <Image
+                    src={product.imageUrl}
+                    alt={product.name}
+                    fill
+                    className="object-cover transition-transform duration-300 hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Product Details Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Card className="py-0">
+                <CardContent className="flex items-center p-4">
+                  <Package className="h-5 w-5 mr-3 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Stock</p>
+                    <p className="text-xs text-muted-foreground">
+                      {product.quantity} available
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="py-0">
+                <CardContent className="flex items-center p-4">
+                  <Tag className="h-5 w-5 mr-3 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Category</p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {product.category}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="py-0">
+                <CardContent className="flex items-center p-4">
+                  <MapPin className="h-5 w-5 mr-3 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Location</p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {product.location}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Product Information */}
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight mb-4">
+                {product.name}
+              </h1>
+              
+              <div className="flex items-center gap-4 mb-4">
+                <div className="text-3xl font-bold text-primary">
+                  ₱{typeof product.price === "number" 
+                    ? product.price.toLocaleString() 
+                    : "Price Unavailable"}
+                </div>
+                <Badge 
+                  variant={isOutOfStock ? "destructive" : "default"}
+                  className="text-sm"
+                >
+                  {isOutOfStock ? "Out of Stock" : "In Stock"}
+                </Badge>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Quantity Selection */}
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Quantity</Label>
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleQuantityChange(-1)}
+                  disabled={quantity <= 1 || isOutOfStock}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <Input
+                  type="number"
+                  min="1"
+                  max={product.quantity}
+                  value={quantity}
+                  onChange={(e) =>
+                    setQuantity(
+                      Math.min(
+                        Math.max(1, parseInt(e.target.value) || 1),
+                        product.quantity || 1
+                      )
+                    )
+                  }
+                  className="w-20 text-center"
+                  disabled={isOutOfStock}
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleQuantityChange(1)}
+                  disabled={quantity >= (product.quantity || 0) || isOutOfStock}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {product.quantity} available
+                </span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              {isSignedIn ? (
+                <>
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    onClick={handleAddToCart}
+                    disabled={addToCartLoading || isOutOfStock}
+                  >
+                    {addToCartLoading ? (
+                      <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                    ) : (
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                    )}
+                    {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full"
+                    disabled={isOutOfStock}
+                  >
+                    <ShoppingCart className="h-5 w-5 mr-2" />
+                    Buy Now
+                  </Button>
+                </>
+              ) : (
+                <SignInButton mode="modal">
+                  <Button size="lg" className="w-full">
+                    <Lock className="h-5 w-5 mr-2" />
+                    Sign In to Purchase
+                  </Button>
+                </SignInButton>
+              )}
+            </div>
+
+            {/* Features */}
+            {/* <div className="grid grid-cols-3 gap-4">
+              <div className="flex items-center space-x-2 text-sm">
+                <Truck className="h-4 w-4 text-primary" />
+                <span>Free Delivery</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm">
+                <Shield className="h-4 w-4 text-primary" />
+                <span>Warranty</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm">
+                <RefreshCw className="h-4 w-4 text-primary" />
+                <span>Easy Returns</span>
+              </div>
+            </div> */}
+          </div>
+        </div>
+
+        {/* Product Details Tabs */}
+        <div className="mt-12">
+          <Tabs defaultValue="description" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="description">Description</TabsTrigger>
+              <TabsTrigger value="specifications">Specifications</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="description" className="mt-6">
+              <Card className="py-6">
+                <CardHeader>
+                  <CardTitle>Product Description</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                    {product.description || "No description available for this product."}
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="specifications" className="mt-6">
+              <Card className="py-6">
+                <CardHeader>
+                  <CardTitle>Specifications</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="font-medium">Category</span>
+                      <span className="text-muted-foreground capitalize">{product.category}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="font-medium">Location</span>
+                      <span className="text-muted-foreground capitalize">{product.location}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="font-medium">Stock Quantity</span>
+                      <span className="text-muted-foreground">{product.quantity}</span>
+                    </div>
+                    {/* <div className="flex justify-between py-2">
+                      <span className="font-medium">Product ID</span>
+                      <span className="text-muted-foreground font-mono">{slug}</span>
+                    </div> */}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </div>
   );
 }

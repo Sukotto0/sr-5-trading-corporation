@@ -263,7 +263,7 @@ export async function getCartItems(userId: string) {
   }
 }
 
-export async function removeCartItem(itemId: number) {
+export async function removeCartItem(itemId: string) {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_BASE_URL}/api/removeCartItem`,
     {
@@ -276,5 +276,288 @@ export async function removeCartItem(itemId: number) {
   );
 
   return response.json();
+}
+
+export async function updateCartItem(itemId: string, quantity: number) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/updateCartItem`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ itemId, quantity }),
+    }
+  );
+
+  return response.json();
+}
+
+export async function getAppointmentsByUser(userId: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/getAppointmentsByUser?userId=${userId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      return data.appointments;
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    return [];
+  }
+}
+
+export async function getAllFeedback() {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/getFeedback`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      return {
+        feedback: data.feedback || [],
+        stats: data.stats || {}
+      };
+    }
+    return { feedback: [], stats: {} };
+  } catch (error) {
+    console.error("Error fetching feedback:", error);
+    return { feedback: [], stats: {} };
+  }
+}
+
+export async function updateFeedbackStatus(id: string, status: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/manageFeedback`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id, status }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error("Error updating feedback status:", error);
+    return false;
+  }
+}
+
+export async function deleteFeedback(id: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/manageFeedback?id=${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error("Error deleting feedback:", error);
+    return false;
+  }
+}
+
+export async function getAllAppointments() {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/getAllAppointments`,
+      { 
+        method: "GET",
+        cache: "no-store" // Ensure fresh data
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch appointments');
+    }
+    
+    const data = await response.json();
+    if (data.success) {
+      return { success: true, data: data.appointments };
+    }
+    return { success: false, data: [], error: 'API returned unsuccessful response' };
+  } catch (error) {
+    console.error("Error fetching all appointments:", error);
+    return { success: false, data: [], error: 'Failed to fetch appointments' };
+  }
+}
+
+export async function getAllTransactions() {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/getAllTransactions`,
+      { 
+        method: "GET",
+        cache: "no-store" // Ensure fresh data
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch transactions');
+    }
+    
+    const data = await response.json();
+    if (data.success) {
+      // Filter for test drives and reservation claiming
+      const filteredTransactions = data.transactions.filter((t: any) => 
+        t.transactionType?.toLowerCase().includes('test drive') ||
+        t.transactionType?.toLowerCase().includes('reservation') ||
+        t.transactionType?.toLowerCase().includes('claiming')
+      );
+      return { success: true, data: filteredTransactions };
+    }
+    return { success: false, data: [], error: 'API returned unsuccessful response' };
+  } catch (error) {
+    console.error("Error fetching all transactions:", error);
+    return { success: false, data: [], error: 'Failed to fetch transactions' };
+  }
+}
+
+// Server actions for events
+export async function getAllEvents() {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/events`,
+      { 
+        method: "GET",
+        cache: "no-store" // Ensure fresh data
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch events');
+    }
+    
+    const data = await response.json();
+    if (data.success) {
+      return { success: true, data: data.events };
+    }
+    return { success: false, data: [], error: 'API returned unsuccessful response' };
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    return { success: false, data: [], error: 'Failed to fetch events' };
+  }
+}
+
+export async function createEvent(eventData: any) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/events`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventData),
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to create event');
+    }
+    
+    const data = await response.json();
+    if (data.success) {
+      return { success: true, event: data.event };
+    }
+    return { success: false, error: 'API returned unsuccessful response' };
+  } catch (error) {
+    console.error("Error creating event:", error);
+    return { success: false, error: 'Failed to create event' };
+  }
+}
+
+export async function updateEvent(eventData: any) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/events`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventData),
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to update event');
+    }
+    
+    const data = await response.json();
+    if (data.success) {
+      return { success: true, event: data.event };
+    }
+    return { success: false, error: 'API returned unsuccessful response' };
+  } catch (error) {
+    console.error("Error updating event:", error);
+    return { success: false, error: 'Failed to update event' };
+  }
+}
+
+export async function deleteEvent(eventId: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/events?id=${eventId}`,
+      {
+        method: "DELETE",
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete event');
+    }
+    
+    const data = await response.json();
+    if (data.success) {
+      return { success: true };
+    }
+    return { success: false, error: 'API returned unsuccessful response' };
+  } catch (error) {
+    console.error("Error deleting event:", error);
+    return { success: false, error: 'Failed to delete event' };
+  }
 }
 

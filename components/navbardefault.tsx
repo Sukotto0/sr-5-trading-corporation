@@ -121,63 +121,62 @@ export default function NavbarDefault() {
       {/* Mobile Menu */}
       <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
         <div className="fixed inset-0 z-50" />
-        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full sm:max-w-sm bg-lime-900 p-6 overflow-y-auto">
+        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full sm:max-w-sm bg-emerald-900 p-6 overflow-y-auto">
           <div className="flex items-center justify-between">
             <a href="/" className="-m-1.5 p-1.5">
-              <img alt="" src="/images/SR5Minimal.png" className="h-8 w-auto" />
+              <img alt="" src="/images/SR5MoreMinimal.png" className="h-8 w-auto" />
             </a>
             <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-gray-400">
               <XMarkIcon className="h-6 w-6" />
             </button>
           </div>
 
-          <div className="mt-6 space-y-4">
-            {/* Mobile Disclosure (controlled) */}
-            <div ref={disclosureRef}>
-              <Disclosure as="div" defaultOpen={false}>
-                {() => (
-                  <>
-                    <DisclosureButton
-                      onClick={() => setDisclosureOpen((prev) => !prev)}
-                      className="flex w-full justify-between rounded-lg py-2 px-3 text-white font-semibold hover:bg-white/5"
-                    >
-                      Browse Units
-                      <ChevronDownIcon className="h-5 w-5" />
-                    </DisclosureButton>
-                    {disclosureOpen && (
-                      <DisclosurePanel className="mt-2 space-y-2">
-                        {products.map((item) => (
-                          <Link
-                            key={item.name}
-                            href={item.href}
-                            onClick={() => setDisclosureOpen(false)}
-                            className="block rounded-lg py-2 pl-6 text-sm text-white hover:bg-white/5"
-                          >
-                            {item.name}
-                          </Link>
-                        ))}
-                      </DisclosurePanel>
-                    )}
-                  </>
-                )}
-              </Disclosure>
-            </div>
+          <div className="mt-6 flow-root">
+            <div className="-my-6 divide-y divide-gray-500/10">
+              <div className="space-y-2 py-6">
+                <Link 
+                  href="/" 
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Home
+                </Link>
+                
+                <Link
+                  href="/browse/trucks"
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Products
+                </Link>
 
-            <SignInButton mode="modal" forceRedirectUrl={"/schedule"}>
-              <div className="block rounded-lg px-3 py-2 text-white font-semibold hover:bg-white/5">
-                Schedule a Visit
+                <Link 
+                  href="/services" 
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Services
+                </Link>
               </div>
-            </SignInButton>
-            <SignInButton mode="modal">
-              <div className="block rounded-lg px-3 py-2 text-white font-semibold hover:bg-white/5">
-                Sign In
+              
+              <div className="space-y-2 py-6">
+                <SignInButton mode="modal" forceRedirectUrl={"/schedule"}>
+                  <div className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800 cursor-pointer">
+                    Schedule a Visit
+                  </div>
+                </SignInButton>
+                <SignInButton mode="modal">
+                  <div className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800 cursor-pointer">
+                    Log In
+                  </div>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <div className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800 cursor-pointer">
+                    Sign Up
+                  </div>
+                </SignUpButton>
               </div>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <div className="block rounded-lg px-3 py-2 text-white font-semibold hover:bg-white/5">
-                Sign Up
-              </div>
-            </SignUpButton>
+            </div>
           </div>
         </DialogPanel>
       </Dialog>

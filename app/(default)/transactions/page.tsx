@@ -206,16 +206,30 @@ const TransactionHistoryTable = () => {
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const { user } = useUser();
   useEffect(() => {
-    // Fetch transactions from API
-    getTransactionsByUser(user?.id || "").then((data) => {
-      console.log("Fetched transactions:", data);
-      if (data && Array.isArray(data)) {
-        setTransactions(data);
-      }
-    });
+    if (user?.id) {
+      setLoading(true);
+      // Fetch transactions from API for the current user
+      getTransactionsByUser(user.id).then((data) => {
+        console.log("Fetched transactions:", data);
+        if (data && Array.isArray(data)) {
+          // Additional client-side filtering to ensure only current user's transactions
+          const userTransactions = data.filter((transaction: Transaction) => 
+            transaction.userId === user.id
+          );
+          setTransactions(userTransactions);
+        }
+        setLoading(false);
+      }).catch(() => {
+        setLoading(false);
+      });
+    }
   }, [user]);
 
   const openModal = (transaction: any) => {
@@ -228,32 +242,94 @@ const TransactionHistoryTable = () => {
     setIsModalOpen(false);
   };
 
-  // Sort transactions by date descending (most recent first)
-  const sortedTransactions = [...transactions].sort((a, b) => {
+  // Filter and sort transactions
+  const filteredTransactions = statusFilter === 'all' 
+    ? transactions 
+    : transactions.filter(tx => tx.status.toLowerCase() === statusFilter.toLowerCase());
+    
+  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
     // Ensure we parse string dates to timestamps; fallback to 0 if missing/invalid
     const aTime = a.lastUpdated ? new Date(a.lastUpdated).getTime() : 0;
     const bTime = b.lastUpdated ? new Date(b.lastUpdated).getTime() : 0;
     return bTime - aTime;
   });
 
+  // Calculate pagination values
+  const totalItems = sortedTransactions.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = sortedTransactions.slice(startIndex, endIndex);
+  const showingFrom = totalItems > 0 ? startIndex + 1 : 0;
+  const showingTo = Math.min(endIndex, totalItems);
+
+  // Pagination handlers
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Reset to first page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
+  // Get unique statuses for filter options
+  const uniqueStatuses = Array.from(new Set(transactions.map(tx => tx.status)));
+
   return (
     <div className="bg-white min-h-screen flex items-start justify-center">
       <div className="w-full bg-white rounded-3xl overflow-hidden ">
         {/* --- Header Section --- */}
         <div className="p-6 sm:p-8 bg-white border-b border-gray-100">
-          <div className="flex items-center space-x-3 mb-2">
-            <ListOrdered className="w-8 h-8 text-emerald-600" />
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-              Transactions
-            </h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="flex items-center space-x-3 mb-2">
+                <ListOrdered className="w-8 h-8 text-emerald-600" />
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                  Transactions
+                </h1>
+              </div>
+              <p className="text-md text-gray-600">
+                View and manage details for all recent transactions on your account.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Filter by status:</span>
+              <select 
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 min-w-[120px]"
+              >
+                <option value="all">All Status</option>
+                {uniqueStatuses.map(status => (
+                  <option key={status} value={status.toLowerCase()}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <p className="text-md text-gray-600">
-            View and manage details for all recent transactions on your account.
-          </p>
         </div>
 
         {/* --- Transaction Table --- */}
         <div className="overflow-x-auto p-4 sm:p-6 lg:p-8">
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="text-gray-500">Loading transactions...</div>
+            </div>
+          ) : totalItems === 0 ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="text-gray-500">No transactions found.</div>
+            </div>
+          ) : (
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -293,7 +369,7 @@ const TransactionHistoryTable = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {transactions.map((tx) => {
+              {currentItems.map((tx) => {
                 const { color, dotColor } = getStatusTheme(tx.status);
                 const amountClass =
                   tx.status === "Failed"
@@ -360,18 +436,63 @@ const TransactionHistoryTable = () => {
               })}
             </tbody>
           </table>
+          )}
         </div>
 
         {/* --- Footer / Pagination Area --- */}
-        <div className="p-4 sm:p-6 bg-gray-50 flex justify-between items-center text-sm text-gray-600 border-t border-gray-200">
-          <span>
-            Showing 1 to {sortedTransactions.length} of{" "}
-            {sortedTransactions.length} results
-          </span>
-          <button className="text-emerald-600 font-semibold hover:text-emerald-700 transition duration-150">
-            Load More
-          </button>
+        {!loading && totalItems > 0 && (
+        <div className="p-4 sm:p-6 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600 border-t border-gray-200">
+          <div className="flex items-center gap-4">
+            <span>
+              Showing {showingFrom} to {showingTo} of {totalItems} results
+            </span>
+            <div className="flex items-center gap-2">
+              <span>Show:</span>
+              <select 
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1); // Reset to first page when changing items per page
+                }}
+                className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+              <span>per page</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={goToPrevPage}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 rounded font-semibold transition duration-150 ${
+                currentPage === 1 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'
+              }`}
+            >
+              Previous
+            </button>
+            <span className="px-2">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button 
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 rounded font-semibold transition duration-150 ${
+                currentPage === totalPages 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'
+              }`}
+            >
+              Next
+            </button>
+          </div>
         </div>
+        )}
       </div>
 
       {/* Conditional Modal Render */}
