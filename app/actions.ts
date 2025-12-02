@@ -446,7 +446,8 @@ export async function getAllTransactions() {
         t.transactionType?.toLowerCase().includes('reservation') ||
         t.transactionType?.toLowerCase().includes('claiming')
       );
-      return { success: true, data: filteredTransactions };
+
+      return { success: true, data: data.transactions };
     }
     return { success: false, data: [], error: 'API returned unsuccessful response' };
   } catch (error) {
@@ -561,3 +562,187 @@ export async function deleteEvent(eventId: string) {
   }
 }
 
+// User Management Actions
+export async function getAllUsers() {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/users`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store"
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return { success: false, users: [], stats: {} };
+  }
+}
+
+export async function updateUserMetadata(userId: string, metadata: any) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/users`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, metadata }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error("Error updating user metadata:", error);
+    return false;
+  }
+}
+
+export async function deleteUser(userId: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/users?userId=${userId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return false;
+  }
+}
+
+// Admin Management Actions
+export async function getAllAdmins(userId: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/admins?userId=${userId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store"
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching admins:", error);
+    return { success: false, admins: [], stats: {} };
+  }
+}
+
+export async function createAdmin(adminData: {
+  email: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  password: string;
+  adminRole: string;
+  assignedBranch?: string;
+  userId: string;
+}) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/admins`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(adminData),
+      }
+    );
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return { success: data.success, error: null };
+  } catch (error: any) {
+    console.error("Error creating admin:", error);
+    return { success: false, error: error.message || "Failed to create admin" };
+  }
+}
+
+export async function updateAdmin(adminId: string, adminRole: string, assignedBranch?: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/admins`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ adminId, adminRole, assignedBranch }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error("Error updating admin:", error);
+    return false;
+  }
+}
+
+export async function deleteAdmin(adminId: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/admins?adminId=${adminId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error("Error deleting admin:", error);
+    return false;
+  }
+}

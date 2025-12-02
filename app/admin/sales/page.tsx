@@ -367,13 +367,10 @@ const Sales = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const data = await getAllTransactions();
-        console.log('Fetched transactions:', data); // Debug log
-        if (data && data.length > 0) {
-          console.log('First transaction status:', data[0].status); // Debug log
-          console.log('All unique statuses:', Array.from(new Set(data.map((tx: any) => tx.status)))); // Debug log
+        const response = await getAllTransactions();
+        if (response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
         }
-        setTransactions(data || []);
+        setTransactions(response.success && Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error('Error fetching transactions:', error);
       } finally {
@@ -696,13 +693,20 @@ const Sales = () => {
                     contentStyle={{ 
                       backgroundColor: '#f8fafc',
                       border: '1px solid #e2e8f0',
-                      borderRadius: '8px'
+                      borderRadius: '8px',
+                      padding: '12px'
                     }}
                     formatter={(value: any, name: string) => {
-                      if (name === 'revenue') {
+                      if (name === 'Revenue') {
                         return [`₱${Number(value).toLocaleString()}`, 'Revenue'];
                       }
-                      return [value, name === 'transactions' ? 'Total Transactions' : 'Successful Orders'];
+                      if (name === 'Total Transactions') {
+                        return [value, 'Total Transactions'];
+                      }
+                      if (name === 'Successful Orders') {
+                        return [value, 'Successful Orders'];
+                      }
+                      return [value, name];
                     }}
                   />
                   <Legend />

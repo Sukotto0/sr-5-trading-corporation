@@ -1,107 +1,41 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   UsersIcon,
   UserGroupIcon,
   UserPlusIcon,
-  PencilIcon,
   TrashIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
-  EllipsisVerticalIcon,
   ClockIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
+import { getAllUsers, updateUserMetadata, deleteUser } from "@/app/actions";
+import Image from "next/image";
 
-// --- Mock Data ---
+// --- Types ---
+type ClerkUser = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  imageUrl: string;
+  createdAt: number;
+  lastSignInAt: number | null;
+  publicMetadata: any;
+  privateMetadata: any;
+  unsafeMetadata: any;
+};
 
-// Key Performance Indicators for User Management
-const userKpiData = [
-  {
-    name: "Total Users",
-    icon: UsersIcon,
-    value: "1,450",
-    trend: 8.5,
-    isPositive: true,
-    color: "indigo",
-  },
-  {
-    name: "Active Users (Last 7 Days)",
-    icon: UserGroupIcon,
-    value: "1,120",
-    trend: 1.2,
-    isPositive: true,
-    color: "green",
-  },
-  {
-    name: "New Signups (This Month)",
-    icon: UserPlusIcon,
-    value: "155",
-    trend: 4.0,
-    isPositive: false, // Example of a negative trend
-    color: "red",
-  },
-];
-
-// Mock list of users
-const mockUsers = [
-  {
-    id: 1001,
-    name: "Alice Johnson",
-    email: "alice.j@example.com",
-    role: "Admin",
-    status: "Active",
-    signupDate: "2023-01-15",
-  },
-  {
-    id: 1002,
-    name: "Bob Smith",
-    email: "bob.s@example.com",
-    role: "Editor",
-    status: "Active",
-    signupDate: "2023-03-22",
-  },
-  {
-    id: 1003,
-    name: "Charlie Brown",
-    email: "charlie.b@example.com",
-    role: "Viewer",
-    status: "Inactive",
-    signupDate: "2024-05-01",
-  },
-  {
-    id: 1004,
-    name: "Dana Scully",
-    email: "dana.s@example.com",
-    role: "Editor",
-    status: "Active",
-    signupDate: "2024-06-10",
-  },
-  {
-    id: 1005,
-    name: "Ethan Hunt",
-    email: "ethan.h@example.com",
-    role: "Viewer",
-    status: "Active",
-    signupDate: "2024-07-19",
-  },
-  {
-    id: 1006,
-    name: "Fiona Glenn",
-    email: "fiona.g@example.com",
-    role: "Admin",
-    status: "Active",
-    signupDate: "2024-02-14",
-  },
-  {
-    id: 1007,
-    name: "George King",
-    email: "george.k@example.com",
-    role: "Viewer",
-    status: "Suspended",
-    signupDate: "2024-01-01",
-  },
-];
+type UserStats = {
+  totalUsers: number;
+  activeUsers: number;
+  newSignups: number;
+  totalTrend: number;
+  activeTrend: number;
+  signupTrend: number;
+};
 
 // --- Helper Functions ---
 
@@ -166,7 +100,7 @@ const ModalBase = ({ title, isOpen, onClose, children }: any) => {
   return (
     // Modal Overlay
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 transition-opacity duration-300"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/30 bg-opacity-75 flex items-center justify-center p-4 transition-opacity duration-300"
       onClick={onClose} // Close modal when clicking outside
     >
       {/* Modal Content */}
@@ -203,140 +137,115 @@ const ModalBase = ({ title, isOpen, onClose, children }: any) => {
   );
 };
 
-const UserFormModal = ({ isOpen, onClose, user, onSave }: any) => {
-  const isEdit = !!user;
-  const title = isEdit ? "Edit User Account" : "Add New User";
-
-  // Initial form state based on user prop or empty if adding
-  const [formData, setFormData] = React.useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    role: user?.role || "Viewer", // Role is still needed for form functionality
-    status: user?.status || "Active",
-  });
-
-  // Reset form data when user prop changes (e.g., when opening for a new user)
-  React.useEffect(() => {
-    setFormData({
-      name: user?.name || "",
-      email: user?.email || "",
-      role: user?.role || "Viewer",
-      status: user?.status || "Active",
-    });
-  }, [user]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    onSave({ ...user, ...formData });
-    onClose();
-  };
+// View User Details Modal
+const ViewUserModal = ({ isOpen, onClose, user }: any) => {
+  if (!user) return null;
 
   return (
-    <ModalBase title={title} isOpen={isOpen} onClose={onClose}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <ModalBase title="User Details" isOpen={isOpen} onClose={onClose}>
+      <div className="space-y-4">
+        <div className="flex items-center space-x-4 pb-4 border-b">
+          <div className="shrink-0">
+            <Image
+              src={user.imageUrl}
+              alt={`${user.firstName} ${user.lastName}`}
+              width={64}
+              height={64}
+              className="rounded-full"
+            />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {user.firstName} {user.lastName}
+            </h3>
+            <p className="text-sm text-gray-500">{user.email}</p>
+          </div>
+        </div>
+
         <div>
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Full Name
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
-          />
+          <label className="block text-sm font-medium text-gray-700">User ID</label>
+          <p className="mt-1 text-sm text-gray-900 font-mono break-all">{user.id}</p>
         </div>
+
         <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Email Address
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
-          />
+          <label className="block text-sm font-medium text-gray-700">Sign Up Date</label>
+          <p className="mt-1 text-sm text-gray-900">
+            {new Date(user.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
         </div>
+
         <div>
-          <label
-            htmlFor="role"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Role
-          </label>
-          <select
-            id="role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
-          >
-            <option value="Admin">Admin</option>
-            <option value="Editor">Editor</option>
-            <option value="Viewer">Viewer</option>
-          </select>
+          <label className="block text-sm font-medium text-gray-700">Last Sign In</label>
+          <p className="mt-1 text-sm text-gray-900">
+            {user.lastSignInAt 
+              ? new Date(user.lastSignInAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })
+              : 'Never signed in'
+            }
+          </p>
         </div>
+
         <div>
-          <label
-            htmlFor="status"
-            className="block text-sm font-medium text-gray-700"
+          <label className="block text-sm font-medium text-gray-700">Account Status</label>
+          <span
+            className={classNames(
+              getStatusClasses(user.lastSignInAt),
+              "mt-1 inline-flex px-3 py-1 text-xs font-semibold rounded-full"
+            )}
           >
-            Status
-          </label>
-          <select
-            id="status"
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
-          >
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Suspended">Suspended</option>
-          </select>
+            {getStatusText(user.lastSignInAt)}
+          </span>
         </div>
-        <div className="flex justify-end pt-4 space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg shadow-md hover:bg-emerald-700 transition"
-          >
-            {isEdit ? "Save Changes" : "Create User"}
-          </button>
-        </div>
-      </form>
+      </div>
+
+      <div className="flex justify-end pt-6 space-x-3 border-t mt-6">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+        >
+          Close
+        </button>
+      </div>
     </ModalBase>
   );
 };
 
+const getStatusClasses = (lastSignIn: number | null) => {
+  if (!lastSignIn) return "bg-gray-100 text-gray-800";
+  
+  const daysSinceSignIn = (Date.now() - lastSignIn) / (1000 * 60 * 60 * 24);
+  if (daysSinceSignIn <= 7) return "bg-green-100 text-green-800";
+  if (daysSinceSignIn <= 30) return "bg-yellow-100 text-yellow-800";
+  return "bg-red-100 text-red-800";
+};
+
+const getStatusText = (lastSignIn: number | null) => {
+  if (!lastSignIn) return "Never signed in";
+  
+  const daysSinceSignIn = (Date.now() - lastSignIn) / (1000 * 60 * 60 * 24);
+  if (daysSinceSignIn <= 7) return "Active";
+  if (daysSinceSignIn <= 30) return "Inactive";
+  return "Dormant";
+};
+
+// Delete Confirmation Modal
 const DeleteConfirmationModal = ({ isOpen, onClose, user, onDelete }: any) => {
-  // Only proceed if a user object is provided
   if (!user) return null;
 
   const handleDelete = () => {
-    onDelete(user.id);
+    onDelete();
     onClose();
   };
 
@@ -345,7 +254,9 @@ const DeleteConfirmationModal = ({ isOpen, onClose, user, onDelete }: any) => {
       <div className="text-gray-700">
         <p>
           Are you sure you want to permanently delete the user{" "}
-          <strong className="font-semibold text-gray-900">{user.name}</strong>?
+          <strong className="font-semibold text-gray-900">
+            {user.firstName} {user.lastName}
+          </strong>?
         </p>
         <p className="mt-3 text-sm text-red-600 font-medium">
           This action cannot be undone. All data associated with this user will
@@ -373,7 +284,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, user, onDelete }: any) => {
 };
 
 const UserManagement = () => {
-  const [currentTime] = React.useState(
+  const [currentTime, setCurrentTime] = useState(
     new Date().toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
@@ -382,89 +293,141 @@ const UserManagement = () => {
   );
 
   // State for user list
-  const [users, setUsers] = React.useState(mockUsers);
+  const [users, setUsers] = useState<ClerkUser[]>([]);
+  const [stats, setStats] = useState<UserStats>({
+    totalUsers: 0,
+    activeUsers: 0,
+    newSignups: 0,
+    totalTrend: 0,
+    activeTrend: 0,
+    signupTrend: 0
+  });
+  const [loading, setLoading] = useState(true);
 
   // States for Modals
-  const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
-  const [currentUser, setCurrentUser] = React.useState(null); // User object for edit/delete
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<ClerkUser | null>(null);
 
-  const getStatusClasses = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-800";
-      case "Inactive":
-        return "bg-yellow-100 text-yellow-800";
-      case "Suspended":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  // Update time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(
+        new Date().toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }) + " PHT"
+      );
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch users from Clerk
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await getAllUsers();
+      console.log(response.users)
+      if (response.success) {
+        setUsers(response.users || []);
+        setStats(response.stats || {
+          totalUsers: 0,
+          activeUsers: 0,
+          newSignups: 0,
+          totalTrend: 0,
+          activeTrend: 0,
+          signupTrend: 0
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const getStatusClasses = (lastSignIn: number | null) => {
+    if (!lastSignIn) return "bg-gray-100 text-gray-800";
+    
+    const daysSinceSignIn = (Date.now() - lastSignIn) / (1000 * 60 * 60 * 24);
+    if (daysSinceSignIn <= 7) return "bg-green-100 text-green-800";
+    if (daysSinceSignIn <= 30) return "bg-yellow-100 text-yellow-800";
+    return "bg-red-100 text-red-800";
+  };
+
+  const getStatusText = (lastSignIn: number | null) => {
+    if (!lastSignIn) return "Never signed in";
+    
+    const daysSinceSignIn = (Date.now() - lastSignIn) / (1000 * 60 * 60 * 24);
+    if (daysSinceSignIn <= 7) return "Active";
+    if (daysSinceSignIn <= 30) return "Inactive";
+    return "Dormant";
+  };
+
+  // Create dynamic KPI data
+  const userKpiData = [
+    {
+      name: "Total Users",
+      icon: UsersIcon,
+      value: stats.totalUsers.toString(),
+      trend: stats.totalTrend,
+      isPositive: stats.totalTrend >= 0,
+      color: "indigo",
+    },
+    {
+      name: "Active Users (Last 7 Days)",
+      icon: UserGroupIcon,
+      value: stats.activeUsers.toString(),
+      trend: stats.activeTrend,
+      isPositive: stats.activeTrend >= 0,
+      color: "green",
+    },
+    {
+      name: "New Signups (This Month)",
+      icon: UserPlusIcon,
+      value: stats.newSignups.toString(),
+      trend: stats.signupTrend,
+      isPositive: stats.signupTrend >= 0,
+      color: "red",
+    },
+  ];
+
   // --- Modal Handlers ---
 
-  const openAddModal = () => {
-    setCurrentUser(null); // Clear previous user data
-    setIsFormModalOpen(true);
-  };
-
-  const openEditModal = (user: any) => {
+  const openViewModal = (user: ClerkUser) => {
     setCurrentUser(user);
-    setIsFormModalOpen(true);
+    setIsViewModalOpen(true);
   };
 
-  const openDeleteModal = (user: any) => {
+  const openDeleteModal = (user: ClerkUser) => {
     setCurrentUser(user);
     setIsDeleteModalOpen(true);
   };
 
-  // --- CRUD Handlers (Placeholders) ---
+  // --- CRUD Handlers ---
 
-  const handleSaveUser = (userData: any) => {
-    if (userData.id) {
-      // Edit existing user
-      setUsers((prevUsers) =>
-        prevUsers.map((u) => (u.id === userData.id ? userData : u))
-      );
-      console.log("User Edited:", userData);
-    } else {
-      // Add new user
-      setUsers((prevUsers) => {
-        const newId = Math.max(...prevUsers.map((u) => u.id), 0) + 1;
-        const newUser = {
-          ...userData,
-          id: newId,
-          signupDate: new Date().toISOString().slice(0, 10),
-        };
-        console.log("User Added:", newUser);
-        return [...prevUsers, newUser];
-      });
+  const handleDeleteUser = async () => {
+    if (currentUser) {
+      const success = await deleteUser(currentUser.id);
+      if (success) {
+        await fetchUsers(); // Refresh the list
+        console.log("User deleted:", currentUser.id);
+      }
     }
-  };
-
-  const handleDeleteUser = (userId: number) => {
-    setUsers((prevUsers) => prevUsers.filter((u) => u.id !== userId));
-    console.log("User Deleted:", userId);
   };
 
   return (
     <div className="bg-white p-6 sm:p-8 min-h-screen">
       {/* Header */}
       <header className="mb-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-extrabold text-gray-900">
-            User Management Dashboard
-          </h1>
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="flex items-center bg-emerald-600 text-white px-4 py-2 rounded-xl shadow-md hover:bg-emerald-700 transition duration-150 text-sm font-semibold"
-          >
-            <UserPlusIcon className="w-5 h-5 mr-2" />
-            Add New User
-          </button>
-        </div>
+        <h1 className="text-3xl font-extrabold text-gray-900">
+          User Management Dashboard
+        </h1>
         <p className="text-sm text-gray-500 mt-2 flex items-center">
           <ClockIcon className="w-4 h-4 mr-1" /> Last Updated: {currentTime}
         </p>
@@ -497,12 +460,6 @@ const UserManagement = () => {
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  User ID
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
                   Name
                 </th>
                 <th
@@ -529,70 +486,93 @@ const UserManagement = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr
-                  key={user.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    #{user.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {user.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                    {user.email}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
-                    {user.signupDate}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={classNames(
-                        getStatusClasses(user.status),
-                        "px-3 inline-flex text-xs leading-5 font-semibold rounded-full"
-                      )}
-                    >
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        title="Edit User"
-                        onClick={() => openEditModal(user)}
-                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded-full hover:bg-indigo-50 transition-colors"
-                      >
-                        <PencilIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        title="Delete User"
-                        onClick={() => openDeleteModal(user)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        title="More Actions"
-                        className="text-gray-400 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100 transition-colors hidden lg:block"
-                      >
-                        <EllipsisVerticalIcon className="w-4 h-4" />
-                      </button>
-                    </div>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    Loading users...
                   </td>
                 </tr>
-              ))}
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    No users found
+                  </td>
+                </tr>
+              ) : (
+                users.map((user) => (
+                  <tr
+                    key={user.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="shrink-0 h-10 w-10">
+                          <Image
+                            src={user.imageUrl}
+                            alt={`${user.firstName} ${user.lastName}`}
+                            width={40}
+                            height={40}
+                            className="rounded-full"
+                          />
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.firstName} {user.lastName}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                      {user.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                      {new Date(user.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={classNames(
+                          getStatusClasses(user.lastSignInAt),
+                          "px-3 inline-flex text-xs leading-5 font-semibold rounded-full"
+                        )}
+                      >
+                        {getStatusText(user.lastSignInAt)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          title="View Details"
+                          onClick={() => openViewModal(user)}
+                          className="text-indigo-600 hover:text-indigo-900 p-1 rounded-full hover:bg-indigo-50 transition-colors"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          title="Delete User"
+                          onClick={() => openDeleteModal(user)}
+                          className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
       {/* Modals */}
-      <UserFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
+      <ViewUserModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
         user={currentUser}
-        onSave={handleSaveUser}
       />
 
       <DeleteConfirmationModal
