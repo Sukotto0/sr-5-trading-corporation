@@ -19,7 +19,8 @@ import {
   CubeTransparentIcon,
   ShoppingCartIcon,
   EyeIcon,
-  ArrowTrendingUpIcon
+  ArrowTrendingUpIcon,
+  CalendarIcon,
 } from "@heroicons/react/24/outline";
 import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
@@ -82,7 +83,7 @@ export default function NavbarDefault() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            className="-m-2.5 p-2.5 text-gray-400"
+            className="-m-2.5 p-2.5 text-white"
           >
             <Bars3Icon className="h-6 w-6" />
           </button>
@@ -93,27 +94,10 @@ export default function NavbarDefault() {
           <Link href="/" className="text-sm font-semibold text-white">
             Home
           </Link>
-          {/* <Popover className="relative">
-            <PopoverButton className="flex items-center gap-x-1 text-sm font-semibold text-white">
-              Products
-              <ChevronDownIcon className="h-5 w-5 text-gray-300" />
-            </PopoverButton>
-            <PopoverPanel className="absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 rounded-3xl bg-white shadow-lg p-4">
-              {products.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="group flex items-center gap-x-4 rounded-lg p-3 hover:bg-white/5"
-                >
-                  <item.icon className="h-6 w-6 text-green-800 group-hover:text-black/50" />
-                  <span className="font-semibold text-black/80 group-hover:text-black/50">
-                    {item.name}
-                  </span>
-                </Link>
-              ))}
-            </PopoverPanel>
-          </Popover> */}
-          <Link href="/browse/trucks" className="text-sm font-semibold text-white">
+          <Link
+            href="/browse/trucks"
+            className="text-sm font-semibold text-white"
+          >
             Products
           </Link>
           <Link href="/services" className="text-sm font-semibold text-white">
@@ -142,6 +126,11 @@ export default function NavbarDefault() {
                 href="/transactions"
               />
               <UserButton.Link
+                label="Appointments"
+                labelIcon={<CalendarIcon />}
+                href="/appointments"
+              />
+              <UserButton.Link
                 label="Feedback"
                 labelIcon={<EyeIcon />}
                 href="/feedback"
@@ -158,10 +147,14 @@ export default function NavbarDefault() {
         className="lg:hidden"
       >
         <div className="fixed inset-0 z-50" />
-        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full sm:max-w-sm bg-lime-900 p-6 overflow-y-auto">
+        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full sm:max-w-sm bg-emerald-900 p-6 overflow-y-auto">
           <div className="flex items-center justify-between">
             <a href="/" className="-m-1.5 p-1.5">
-              <img alt="" src="/images/SR5Minimal.png" className="h-8 w-auto" />
+              <img
+                alt=""
+                src="/images/SR5MoreMinimal.png"
+                className="h-8 w-auto"
+              />
             </a>
             <button
               onClick={() => setMobileMenuOpen(false)}
@@ -171,44 +164,74 @@ export default function NavbarDefault() {
             </button>
           </div>
 
-          <div className="mt-6 space-y-4">
-            {/* Mobile Disclosure (controlled) */}
-            <div ref={disclosureRef}>
-              <Disclosure as="div" defaultOpen={false}>
-                {() => (
-                  <>
-                    <DisclosureButton
-                      onClick={() => setDisclosureOpen((prev) => !prev)}
-                      className="flex w-full justify-between rounded-lg py-2 px-3 text-white font-semibold hover:bg-white/5"
-                    >
-                      Browse Units
-                      <ChevronDownIcon className="h-5 w-5" />
-                    </DisclosureButton>
-                    {disclosureOpen && (
-                      <DisclosurePanel className="mt-2 space-y-2">
-                        {products.map((item) => (
-                          <Link
-                            key={item.name}
-                            href={item.href}
-                            onClick={() => setDisclosureOpen(false)}
-                            className="block rounded-lg py-2 pl-6 text-sm text-white hover:bg-white/5"
-                          >
-                            {item.name}
-                          </Link>
-                        ))}
-                      </DisclosurePanel>
-                    )}
-                  </>
-                )}
-              </Disclosure>
-            </div>
-
-            <SignInButton mode="modal">
-              <div className="block rounded-lg px-3 py-2 text-white font-semibold hover:bg-white/5">
-                Schedule a Visit
+          <div className="mt-6 flow-root">
+            <div className="-my-6 divide-y divide-gray-500/10">
+              <div className="space-y-2 py-6">
+                <Link 
+                  href="/" 
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/browse/trucks"
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Products
+                </Link>
+                <Link 
+                  href="/services" 
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Services
+                </Link>
+                <Link 
+                  href="/schedule" 
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Schedule
+                </Link>
+                <Link 
+                  href="/transactions" 
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Transactions
+                </Link>
+                <Link 
+                  href="/appointments" 
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Appointments
+                </Link>
+                <Link 
+                  href="/feedback" 
+                  className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Feedback
+                </Link>
+                <Link 
+                  href="/cart" 
+                  className="-mx-3 flex items-center gap-x-3 rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-emerald-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <ShoppingCartIcon className="h-6 w-6" />
+                  Cart
+                </Link>
               </div>
-            </SignInButton>
-            <UserButton />
+              <div className="py-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-white">Account</span>
+                  <UserButton />
+                </div>
+              </div>
+            </div>
           </div>
         </DialogPanel>
       </Dialog>

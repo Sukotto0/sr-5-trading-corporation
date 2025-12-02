@@ -75,12 +75,17 @@ const Inventory = () => {
   const [editImagePreview, setEditImagePreview] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const [isEditUploading, setIsEditUploading] = useState(false);
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterLocation, setFilterLocation] = useState("");
+  const [filterStock, setFilterStock] = useState("");
 
   useEffect(() => {
     getInventory().then((data) => {
       if (data && data.success) {
-        const sortedData = data.data.sort((a: InventoryItem, b: InventoryItem) =>
-          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+        const sortedData = data.data.sort(
+          (a: InventoryItem, b: InventoryItem) =>
+            new Date(b.lastUpdated).getTime() -
+            new Date(a.lastUpdated).getTime()
         );
         setInventoryData(sortedData);
       } else {
@@ -157,10 +162,12 @@ const Inventory = () => {
 
       getInventory().then((data) => {
         if (data && data.success) {
-          const sortedData = data.data.sort((a: InventoryItem, b: InventoryItem) =>
-          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
-        );
-        setInventoryData(sortedData);
+          const sortedData = data.data.sort(
+            (a: InventoryItem, b: InventoryItem) =>
+              new Date(b.lastUpdated).getTime() -
+              new Date(a.lastUpdated).getTime()
+          );
+          setInventoryData(sortedData);
         } else {
           console.error("Failed to fetch inventory data");
         }
@@ -258,10 +265,12 @@ const Inventory = () => {
 
       getInventory().then((data) => {
         if (data && data.success) {
-          const sortedData = data.data.sort((a: InventoryItem, b: InventoryItem) =>
-          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
-        );
-        setInventoryData(sortedData);
+          const sortedData = data.data.sort(
+            (a: InventoryItem, b: InventoryItem) =>
+              new Date(b.lastUpdated).getTime() -
+              new Date(a.lastUpdated).getTime()
+          );
+          setInventoryData(sortedData);
         } else {
           console.error("Failed to fetch inventory data");
         }
@@ -296,10 +305,12 @@ const Inventory = () => {
       deleteProduct({ documentId: deletingItem._id });
       getInventory().then((data) => {
         if (data && data.success) {
-          const sortedData = data.data.sort((a: InventoryItem, b: InventoryItem) =>
-          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
-        );
-        setInventoryData(sortedData);
+          const sortedData = data.data.sort(
+            (a: InventoryItem, b: InventoryItem) =>
+              new Date(b.lastUpdated).getTime() -
+              new Date(a.lastUpdated).getTime()
+          );
+          setInventoryData(sortedData);
         } else {
           console.error("Failed to fetch inventory data");
         }
@@ -313,37 +324,104 @@ const Inventory = () => {
     }
   };
 
-  // Filter the inventory data based on search term (simple case-insensitive match on name or ID)
-  const filteredInventory = inventoryData.filter(
-    (item) =>
+  // Filter the inventory data based on all filters
+  const filteredInventory = inventoryData.filter((item) => {
+    // Search filter (name or ID)
+    const matchesSearch = 
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item._id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      item._id.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Category filter
+    const matchesCategory = 
+      !filterCategory || item.category.toLowerCase() === filterCategory.toLowerCase();
+
+    // Location filter
+    const matchesLocation = 
+      !filterLocation || item.location.toLowerCase() === filterLocation.toLowerCase();
+
+    // Stock filter
+    const matchesStock = 
+      !filterStock || 
+      (filterStock === 'in' && item.quantity > 0) ||
+      (filterStock === 'out' && item.quantity <= 0);
+
+    return matchesSearch && matchesCategory && matchesLocation && matchesStock;
+  });
 
   // Main Content Area
 
   return (
     <div className="flex flex-col bg-white">
       {/* Control Panel: Search and Add Button */}
-      <div className="mt-6 mb-8 flex justify-between items-center">
-        <div className="relative w-full max-w-sm">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by name"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
-          />
-        </div>
-        <button
-          onClick={handleOpenModal}
-          className="flex items-center bg-red-800 hover:bg-red-900 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 hover:cursor-pointer"
-        >
-          <PlusIcon className="w-5 h-5 mr-2" />
-          Add New Item
-        </button>
-      </div>
+      {/* Control Panel: Search, Filters, Add Button */}
+<div className="mt-6 mb-8 w-full flex flex-col gap-4">
+
+  {/* Search + Add Button Row */}
+  <div className="flex justify-between items-center w-full">
+    <div className="relative w-full max-w-sm">
+      <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+      <input
+        type="text"
+        placeholder="Search by name"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+      />
+    </div>
+
+    <button
+      onClick={handleOpenModal}
+      className="flex items-center bg-red-800 hover:bg-red-900 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+    >
+      <PlusIcon className="w-5 h-5 mr-2" />
+      Add New Item
+    </button>
+  </div>
+
+  {/* FILTER ROW */}
+  <div className="flex flex-wrap gap-4">
+
+    {/* Category Filter */}
+    <select
+      value={filterCategory}
+      onChange={(e) => setFilterCategory(e.target.value)}
+      className="px-3 py-2 border border-gray-300 rounded-lg"
+    >
+      <option value="">All Categories</option>
+      <option value="trucks">Trucks</option>
+      <option value="heavy-equipment">Heavy Equipment</option>
+      <option value="units">Units</option>
+      <option value="engine">Engine</option>
+      <option value="tools">Tools</option>
+      <option value="parts-accessories">Parts & Accessories</option>
+    </select>
+
+    {/* Location Filter */}
+    <select
+      value={filterLocation}
+      onChange={(e) => setFilterLocation(e.target.value)}
+      className="px-3 py-2 border border-gray-300 rounded-lg"
+    >
+      <option value="">All Locations</option>
+      <option value="bacoor">Bacoor</option>
+      <option value="imus">Imus</option>
+      <option value="albay">Albay</option>
+    </select>
+
+    {/* Stock Filter */}
+    <select
+      value={filterStock}
+      onChange={(e) => setFilterStock(e.target.value)}
+      className="px-3 py-2 border border-gray-300 rounded-lg"
+    >
+      <option value="">All Stock</option>
+      <option value="in">In Stock</option>
+      <option value="out">Out of Stock</option>
+    </select>
+
+  </div>
+</div>
+
 
       {/* Inventory Table */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden h-full grow">

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   ShieldCheckIcon,
   KeyIcon,
@@ -11,129 +11,93 @@ import {
   ArrowTrendingDownIcon,
   ClockIcon,
   BuildingStorefrontIcon,
+  UserPlusIcon,
 } from "@heroicons/react/24/outline";
+import { useUser } from "@clerk/nextjs";
+import { getAllAdmins, createAdmin, updateAdmin, deleteAdmin } from "@/app/actions";
+import Image from "next/image";
+
+// --- Types ---
+type ClerkAdmin = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  imageUrl: string;
+  createdAt: number;
+  lastSignInAt: number | null;
+  adminRole: string;
+  assignedBranch: string;
+};
+
+type AdminStats = {
+  totalAdmins: number;
+  superAdmins: number;
+  imusBranch: number;
+  bacoorBranch: number;
+  albayBranch: number;
+};
 
 // --- Configuration Data ---
 
 // Branches that should have their admin count tracked in KPIs
 const BRANCHES_FOR_KPI = ["Imus Branch", "Bacoor Branch", "Albay Branch"];
 
-// Full list of available branches for the dropdown, including N/A for Super Admins
-const availableBranches = [...BRANCHES_FOR_KPI, "N/A"];
+// Full list of available branches for the dropdown
+const availableBranches = ["Imus", "Bacoor", "Albay"];
 
-const availableRoles = ["Branch Admin", "Super Admin"];
-
-// Mock list of Admin users, updated to include an Imus Branch admin
-const mockAdmins = [
-  {
-    id: 2001,
-    name: "Alexander Pierce",
-    email: "alex.p@admin.com",
-    role: "Super Admin",
-    branch: "N/A",
-    status: "Active",
-    lastLogin: "2024-10-15",
-  },
-  {
-    id: 2002,
-    name: "Brenna Velez",
-    email: "brenna.v@admin.com",
-    role: "Branch Admin",
-    branch: "Bacoor Branch",
-    status: "Active",
-    lastLogin: "2024-10-14",
-  },
-  {
-    id: 2003,
-    name: "Curtis Holt",
-    email: "curtis.h@admin.com",
-    role: "Branch Admin",
-    branch: "Albay Branch",
-    status: "Inactive",
-    lastLogin: "2024-09-01",
-  },
-  {
-    id: 2004,
-    name: "Diana Troy",
-    email: "diana.t@admin.com",
-    role: "Super Admin",
-    branch: "N/A",
-    status: "Active",
-    lastLogin: "2024-10-15",
-  },
-  {
-    id: 2005,
-    name: "Edward Nigma",
-    email: "edward.n@admin.com",
-    role: "Branch Admin",
-    branch: "Bacoor Branch",
-    status: "Suspended",
-    lastLogin: "2024-08-20",
-  },
-  // New admin for Imus Branch
-  {
-    id: 2006,
-    name: "Flora Imus",
-    email: "flora.i@admin.com",
-    role: "Branch Admin",
-    branch: "Imus Branch",
-    status: "Active",
-    lastLogin: "2024-10-15",
-  },
-];
+const availableRoles = ["admin", "superadmin"];
 
 // --- Helper Functions ---
 
 const classNames = (...classes: any[]) => classes.filter(Boolean).join(" ");
 
 /**
- * Calculates the number of Branch Admins and Super Admins for KPI display.
- * @param {Array} admins The list of admin objects.
- * @returns {Array} Formatted KPI data objects.
+ * Generates KPI data from admin stats
  */
-const generateAdminKpiData = (admins: any[]) => {
-  // 1. Calculate Branch-specific counts
-  const branchCounts: { [key: string]: number } = {};
-  BRANCHES_FOR_KPI.forEach((branch) => {
-    // Only count 'Branch Admin' roles for branch KPIs
-    branchCounts[branch] = admins.filter(
-      (admin) => admin.branch === branch && admin.role === "Branch Admin"
-    ).length;
-  });
-
-  // 2. Define static KPIs
-  const baseKpis = [
+const generateAdminKpiData = (stats: AdminStats) => {
+  return [
     {
       name: "Total System Admins",
       icon: ShieldCheckIcon,
-      value: admins.length.toString(),
+      value: stats.totalAdmins.toString(),
       trend: 0.8,
-      isPositive: false,
+      isPositive: true,
       color: "indigo",
     },
     {
       name: "Super Admin Count",
       icon: KeyIcon,
-      value: admins.filter((a) => a.role === "Super Admin").length.toString(),
+      value: stats.superAdmins.toString(),
       trend: 10.0,
       isPositive: true,
       color: "green",
     },
+    {
+      name: "Imus Branch Admins",
+      icon: BuildingStorefrontIcon,
+      value: stats.imusBranch.toString(),
+      trend: 2.5,
+      isPositive: stats.imusBranch > 0,
+      color: "blue",
+    },
+    {
+      name: "Bacoor Branch Admins",
+      icon: BuildingStorefrontIcon,
+      value: stats.bacoorBranch.toString(),
+      trend: 1.5,
+      isPositive: stats.bacoorBranch > 0,
+      color: "blue",
+    },
+    {
+      name: "Albay Branch Admins",
+      icon: BuildingStorefrontIcon,
+      value: stats.albayBranch.toString(),
+      trend: 3.0,
+      isPositive: stats.albayBranch > 0,
+      color: "blue",
+    },
   ];
-
-  // 3. Generate dynamic Branch KPIs
-  const branchKpis = BRANCHES_FOR_KPI.map((branch) => ({
-    name: `${branch} Admins`,
-    icon: BuildingStorefrontIcon,
-    value: branchCounts[branch].toString(),
-    // Mock trend data for consistency
-    trend: Math.floor(Math.random() * 5) + 0.5,
-    isPositive: branchCounts[branch] > 0,
-    color: "blue",
-  }));
-
-  // Combine and return all KPIs
-  return [...baseKpis, ...branchKpis];
 };
 
 // --- Shared Components ---
@@ -218,7 +182,7 @@ const ModalBase = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 transition-opacity duration-300"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/30 bg-opacity-75 flex items-center justify-center p-4 transition-opacity duration-300"
       onClick={onClose}
     >
       <div
@@ -271,20 +235,24 @@ const AdminFormModal = ({
 
   // Initial form state based on admin prop or empty if adding
   const [formData, setFormData] = React.useState({
-    name: admin?.name || "",
+    firstName: admin?.firstName || "",
+    lastName: admin?.lastName || "",
     email: admin?.email || "",
-    role: admin?.role || availableRoles[0],
-    branch: admin?.branch || availableBranches[0],
-    status: admin?.status || "Active",
+    username: admin?.username || "",
+    password: "",
+    adminRole: admin?.adminRole || "admin",
+    assignedBranch: admin?.assignedBranch || "Imus",
   });
 
   React.useEffect(() => {
     setFormData({
-      name: admin?.name || "",
+      firstName: admin?.firstName || "",
+      lastName: admin?.lastName || "",
       email: admin?.email || "",
-      role: admin?.role || availableRoles[0],
-      branch: admin?.branch || availableBranches[0],
-      status: admin?.status || "Active",
+      username: admin?.username || "",
+      password: "",
+      adminRole: admin?.adminRole || "admin",
+      assignedBranch: admin?.assignedBranch || "Imus",
     });
   }, [admin]);
 
@@ -295,117 +263,161 @@ const AdminFormModal = ({
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    onSave({ ...admin, ...formData });
+    onSave(formData);
     onClose();
   };
 
-  const isSuperAdmin = formData.role === "Super Admin";
+  const isSuperAdmin = formData.adminRole === "superadmin";
 
   return (
     <ModalBase title={title} isOpen={isOpen} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
+        {!isEdit && (
+          <>
+            <div>
+              <label
+                htmlFor="firstName"
+                className="block text-sm font-medium text-gray-700"
+              >
+                First Name
+              </label>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="lastName"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Last Name
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                minLength={8}
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Minimum 8 characters</p>
+            </div>
+          </>
+        )}
+        {isEdit && (
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-500">Editing Admin</p>
+            <p className="text-lg font-semibold text-gray-900">
+              {formData.firstName} {formData.lastName}
+            </p>
+            <p className="text-sm text-gray-600">{formData.email}</p>
+          </div>
+        )}
         <div>
           <label
-            htmlFor="name"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Full Name
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            disabled={isEdit}
-            className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 disabled:bg-gray-100 disabled:text-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Email Address
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            disabled={isEdit}
-            className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 disabled:bg-gray-100 disabled:text-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="role"
+            htmlFor="adminRole"
             className="block text-sm font-medium text-gray-700"
           >
             Admin Role
           </label>
           <select
-            id="role"
-            name="role"
-            value={formData.role}
+            id="adminRole"
+            name="adminRole"
+            value={formData.adminRole}
             onChange={handleChange}
             className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           >
-            {availableRoles.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
+            <option value="admin">Branch Admin</option>
+            <option value="superadmin">Super Admin</option>
           </select>
         </div>
-        <div>
-          <label
-            htmlFor="branch"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Assigned Branch
-            {isSuperAdmin && (
-              <span className="text-xs text-red-500 ml-2">
-                (Role is System-Wide)
-              </span>
-            )}
-          </label>
-          <select
-            id="branch"
-            name="branch"
-            value={formData.branch}
-            onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            {availableBranches.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label
-            htmlFor="status"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Account Status
-          </label>
-          <select
-            id="status"
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Suspended">Suspended</option>
-          </select>
-        </div>
+        {!isSuperAdmin && (
+          <div>
+            <label
+              htmlFor="assignedBranch"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Assigned Branch
+            </label>
+            <select
+              id="assignedBranch"
+              name="assignedBranch"
+              value={formData.assignedBranch}
+              onChange={handleChange}
+              className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="Imus">Imus Branch</option>
+              <option value="Bacoor">Bacoor Branch</option>
+              <option value="Albay">Albay Branch</option>
+            </select>
+          </div>
+        )}
+        {isSuperAdmin && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              <strong>Super Admins</strong> have access to all branches and system-wide permissions.
+            </p>
+          </div>
+        )}
         <div className="flex justify-end pt-4 space-x-3">
           <button
             type="button"
@@ -450,8 +462,14 @@ const DeleteConfirmationModal = ({
       <div className="text-gray-700">
         <p>
           Are you sure you want to permanently revoke admin access for{" "}
-          <strong className="font-semibold text-gray-900">{admin.name}</strong>{" "}
-          ({admin.role} at {admin.branch})?
+          <strong className="font-semibold text-gray-900">
+            {admin.firstName} {admin.lastName}
+          </strong>{" "}
+          ({admin.adminRole === "superadmin" ? "Super Admin" : "Branch Admin"}
+          {admin.adminRole !== "superadmin" && admin.assignedBranch 
+            ? ` at ${admin.assignedBranch} Branch` 
+            : ""
+          })?
         </p>
         <p className="mt-3 text-sm text-red-600 font-medium">
           This action will demote the user to a standard user. Ensure you
@@ -479,7 +497,8 @@ const DeleteConfirmationModal = ({
 };
 
 const AdminManagement = () => {
-  const [currentTime] = React.useState(
+  const { user } = useUser();
+  const [currentTime, setCurrentTime] = useState(
     new Date().toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
@@ -488,58 +507,69 @@ const AdminManagement = () => {
   );
 
   // State for admin list
-  const [admins, setAdmins] = React.useState(mockAdmins);
+  const [admins, setAdmins] = useState<ClerkAdmin[]>([]);
+  const [stats, setStats] = useState<AdminStats>({
+    totalAdmins: 0,
+    superAdmins: 0,
+    imusBranch: 0,
+    bacoorBranch: 0,
+    albayBranch: 0
+  });
+  const [loading, setLoading] = useState(true);
 
   // States for Modals
-  const [isFormModalOpen, setIsFormModalOpen] = React.useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
-  const [currentAdmin, setCurrentAdmin] = React.useState(null); // Admin object for edit/delete
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [currentAdmin, setCurrentAdmin] = useState<ClerkAdmin | null>(null);
 
-  // Dynamically calculate all KPI data whenever the admin list changes
+  // Check if current user is superadmin
+  const isSuperAdmin = (user?.publicMetadata as any)?.adminRole === "superadmin";
+
+  // Update time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(
+        new Date().toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }) + " PHT"
+      );
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch admins from Clerk
+  useEffect(() => {
+    fetchAdmins();
+  }, [user]);
+
+  const fetchAdmins = async () => {
+    setLoading(true);
+    try {
+      const response = await getAllAdmins(user?.id || "");
+      if (response.success) {
+        setAdmins(response.admins || []);
+        setStats(response.stats || {
+          totalAdmins: 0,
+          superAdmins: 0,
+          imusBranch: 0,
+          bacoorBranch: 0,
+          albayBranch: 0
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching admins:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Dynamically calculate all KPI data whenever stats change
   const allKpiData = React.useMemo(
-    () => generateAdminKpiData(admins),
-    [admins]
+    () => generateAdminKpiData(stats),
+    [stats]
   );
-
-  const getStatusClasses = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-800";
-      case "Inactive":
-        return "bg-yellow-100 text-yellow-800";
-      case "Suspended":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  // Helper function for role styling
-  const getRoleClasses = (role: string) => {
-    switch (role) {
-      case "Super Admin":
-        return "bg-purple-600 text-white font-extrabold";
-      case "Branch Admin":
-        return "bg-indigo-100 text-indigo-800 font-semibold";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
-
-  // Helper function for branch styling (less prominent for separation)
-  const getBranchClasses = (branch: string) => {
-    // Assigning specific colors for better visual distinction on the table
-    switch (branch) {
-      case "Imus Branch":
-        return "bg-blue-50 text-blue-700";
-      case "Bacoor Branch":
-        return "bg-teal-50 text-teal-700";
-      case "Albay Branch":
-        return "bg-emerald-50 text-emerald-700";
-      default:
-        return "bg-gray-200 text-gray-500";
-    }
-  };
 
   // --- Modal Handlers ---
 
@@ -548,43 +578,72 @@ const AdminManagement = () => {
     setIsFormModalOpen(true);
   };
 
-  const openEditModal = (admin: any) => {
+  const openEditModal = (admin: ClerkAdmin) => {
     setCurrentAdmin(admin);
     setIsFormModalOpen(true);
   };
 
-  const openDeleteModal = (admin: any) => {
+  const openDeleteModal = (admin: ClerkAdmin) => {
     setCurrentAdmin(admin);
     setIsDeleteModalOpen(true);
   };
 
-  // --- CRUD Handlers (Placeholders) ---
+  // --- CRUD Handlers ---
 
-  const handleSaveAdmin = (adminData: any) => {
-    if (adminData.id) {
+  const handleSaveAdmin = async (adminData: {
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    password?: string;
+    adminRole: string;
+    assignedBranch?: string;
+  }) => {
+    if (currentAdmin) {
       // Edit existing admin
-      setAdmins((prevAdmins) =>
-        prevAdmins.map((a) => (a.id === adminData.id ? adminData : a))
+      const success = await updateAdmin(
+        currentAdmin.id,
+        adminData.adminRole,
+        adminData.assignedBranch
       );
-      console.log("Admin Permissions Updated:", adminData);
+      if (success) {
+        await fetchAdmins();
+        console.log("Admin updated:", adminData);
+      }
     } else {
       // Add new admin
-      setAdmins((prevAdmins) => {
-        const newId = Math.max(...prevAdmins.map((a) => a.id), 0) + 1;
-        const newAdmin = {
-          ...adminData,
-          id: newId,
-          lastLogin: new Date().toISOString().slice(0, 10),
-        };
-        console.log("Admin Added:", newAdmin);
-        return [...prevAdmins, newAdmin];
+      if (!adminData.email || !adminData.firstName || !adminData.lastName || !adminData.username || !adminData.password) {
+        console.error("Missing required fields");
+        return;
+      }
+      const result = await createAdmin({
+        email: adminData.email,
+        firstName: adminData.firstName,
+        lastName: adminData.lastName,
+        username: adminData.username,
+        password: adminData.password,
+        adminRole: adminData.adminRole,
+        assignedBranch: adminData.assignedBranch,
+        userId: user?.id || ""
       });
+      if (result.success) {
+        await fetchAdmins();
+        console.log("Admin created successfully");
+      } else {
+        console.error("Failed to create admin:", result.error);
+        alert(result.error || "Failed to create admin");
+      }
     }
   };
 
-  const handleDeleteAdmin = (adminId: number) => {
-    setAdmins((prevAdmins) => prevAdmins.filter((a) => a.id !== adminId));
-    console.log("Admin Access Revoked:", adminId);
+  const handleDeleteAdmin = async () => {
+    if (currentAdmin) {
+      const success = await deleteAdmin(currentAdmin.id);
+      if (success) {
+        await fetchAdmins();
+        console.log("Admin deleted:", currentAdmin.id);
+      }
+    }
   };
 
   return (
@@ -595,14 +654,16 @@ const AdminManagement = () => {
           <h1 className="text-3xl font-extrabold text-gray-900">
             Branch & Super Admin Management
           </h1>
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-xl shadow-md hover:bg-indigo-700 transition duration-150 text-sm font-semibold"
-          >
-            <BuildingStorefrontIcon className="w-5 h-5 mr-2" />
-            Grant New Admin
-          </button>
+          {isSuperAdmin && (
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-xl shadow-md hover:bg-indigo-700 transition duration-150 text-sm font-semibold"
+            >
+              <UserPlusIcon className="w-5 h-5 mr-2" />
+              Grant New Admin
+            </button>
+          )}
         </div>
         <p className="text-sm text-gray-500 mt-2 flex items-center">
           <ClockIcon className="w-4 h-4 mr-1" /> Access Control Last Checked:{" "}
@@ -640,13 +701,7 @@ const AdminManagement = () => {
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Admin ID
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Name
+                  Admin
                 </th>
                 <th
                   scope="col"
@@ -672,67 +727,109 @@ const AdminManagement = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {admins.map((admin) => (
-                <tr
-                  key={admin.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    #{admin.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {admin.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                    <span
-                      className={classNames(
-                        getRoleClasses(admin.role),
-                        "px-3 inline-flex text-xs leading-5 font-semibold rounded-full"
-                      )}
-                    >
-                      {admin.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                    <span
-                      className={classNames(
-                        getBranchClasses(admin.branch),
-                        "px-3 inline-flex text-xs leading-5 font-semibold rounded-full"
-                      )}
-                    >
-                      {admin.branch}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={classNames(
-                        getStatusClasses(admin.status),
-                        "px-3 inline-flex text-xs leading-5 font-semibold rounded-full"
-                      )}
-                    >
-                      {admin.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        title="Edit Role/Branch/Status"
-                        onClick={() => openEditModal(admin)}
-                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded-full hover:bg-indigo-50 transition-colors"
-                      >
-                        <PencilIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        title="Revoke Admin Access"
-                        onClick={() => openDeleteModal(admin)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
-                    </div>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    Loading admins...
                   </td>
                 </tr>
-              ))}
+              ) : admins.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    No admin users found
+                  </td>
+                </tr>
+              ) : (
+                admins.map((admin) => (
+                  <tr
+                    key={admin.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="shrink-0 h-10 w-10">
+                          <Image
+                            src={admin.imageUrl}
+                            alt={`${admin.firstName} ${admin.lastName}`}
+                            width={40}
+                            height={40}
+                            className="rounded-full"
+                          />
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {admin.firstName} {admin.lastName}
+                          </div>
+                          <div className="text-sm text-gray-500">{admin.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                      <span
+                        className={classNames(
+                          admin.adminRole === "superadmin"
+                            ? "bg-purple-100 text-purple-800"
+                            : "bg-blue-100 text-blue-800",
+                          "px-3 inline-flex text-xs leading-5 font-semibold rounded-full capitalize"
+                        )}
+                      >
+                        {admin.adminRole === "superadmin" ? "Super Admin" : "Branch Admin"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                      {admin.adminRole === "superadmin" ? (
+                        <span className="px-3 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-600">
+                          All Branches
+                        </span>
+                      ) : (
+                        <span className="px-3 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          {admin.assignedBranch || "Not Assigned"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={classNames(
+                          admin.lastSignInAt
+                            ? (Date.now() - admin.lastSignInAt) / (1000 * 60 * 60 * 24) <= 7
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                            : "bg-gray-100 text-gray-800",
+                          "px-3 inline-flex text-xs leading-5 font-semibold rounded-full"
+                        )}
+                      >
+                        {admin.lastSignInAt
+                          ? (Date.now() - admin.lastSignInAt) / (1000 * 60 * 60 * 24) <= 7
+                            ? "Active"
+                            : "Inactive"
+                          : "Never Logged In"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end space-x-2">
+                        {isSuperAdmin && (
+                          <>
+                            <button
+                              title="Edit Role/Branch"
+                              onClick={() => openEditModal(admin)}
+                              className="text-indigo-600 hover:text-indigo-900 p-1 rounded-full hover:bg-indigo-50 transition-colors"
+                            >
+                              <PencilIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              title="Revoke Admin Access"
+                              onClick={() => openDeleteModal(admin)}
+                              className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

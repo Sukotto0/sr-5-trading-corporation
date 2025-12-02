@@ -34,6 +34,7 @@ export interface ProductsQueryParams {
   sortBy?: string;
   minPrice?: number;
   maxPrice?: number;
+  search?: string;
 }
 
 // Fetch filters
@@ -69,8 +70,8 @@ export const useProducts = (params: ProductsQueryParams = {}) => {
   const searchParams = new URLSearchParams();
   
   Object.entries(params).forEach(([key, value]) => {
-    if (value) {
-      searchParams.append(key, value);
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.append(key, String(value));
     }
   });
 

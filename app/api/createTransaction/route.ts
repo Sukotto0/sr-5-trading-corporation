@@ -1,6 +1,7 @@
 import paymaya from 'paymaya-js-sdk';
 import clientPromise from "@/lib/mongodb";
 import { NextResponse } from "next/server";
+import test from 'node:test';
 
 export async function POST(request: Request) {
   const {
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
   } = await request.json();
 
   paymaya.init(process.env.MAYA_PUBLIC_KEY!, true);
-  const response: any = await paymaya.createCheckout({
+  const response: any = paymaya.createCheckout({
     totalAmount: {
       currency: "PHP",
       value: toPay,
@@ -51,7 +52,9 @@ export async function POST(request: Request) {
   });
 
   const paymentDetails = response?.checkoutId;
+  const testResponse = await response;
 
+  console.log(testResponse);
   try {
     const client = await clientPromise;
     const db = client.db("main");
