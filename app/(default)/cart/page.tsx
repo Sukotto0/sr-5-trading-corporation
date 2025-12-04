@@ -4,12 +4,13 @@ import React, { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { getCartItems, updateCartItem, removeCartItem } from "@/app/actions";
 import Image from "next/image";
-import { Minus, Plus, Trash2, ShoppingCartIcon, ArrowRight, ShoppingBag } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCartIcon, ArrowRight, ShoppingBag, CheckSquare, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 
 // Helper for formatting currency (using the Philippine Peso symbol for consistency)
@@ -29,6 +30,7 @@ export default function ShoppingCart() {
   const { user } = useUser();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user?.id) {
@@ -41,6 +43,7 @@ export default function ShoppingCart() {
         }
         setLoading(false);
       });
+      
     }
   }, [user]);
 
@@ -99,10 +102,36 @@ export default function ShoppingCart() {
     }
   };
 
+  const toggleItemSelection = (id: string) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedItems(new Set(cartItems.map(item => item._id)));
+  };
+
+  const deselectAll = () => {
+    setSelectedItems(new Set());
+  };
+
+  const selectedCartItems = cartItems.filter(item => selectedItems.has(item._id));
+
   const subtotal =
-    cartItems?.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0;
+    selectedCartItems?.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0;
 
   const total = subtotal; // Keeping total the same as subtotal for simplicity (no taxes/shipping)
+
+  const handleCheckout = () => {
+    
+  }
 
   if (loading) {
     return (
@@ -160,33 +189,98 @@ export default function ShoppingCart() {
           <div className="grid gap-8 lg:grid-cols-3">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
+              {/* Select All / Deselect All */}
+              <div className="flex items-center gap-2 mb-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={selectAll}
+                  className="text-xs"
+                >
+                  <CheckSquare className="h-3 w-3 mr-1" />
+                  Select All
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={deselectAll}
+                  className="text-xs"
+                >
+                  <Square className="h-3 w-3 mr-1" />
+                  Deselect All
+                </Button>
+                <span className="text-sm text-muted-foreground ml-auto">
+                  {selectedItems.size} of {cartItems.length} selected
+                </span>
+              </div>
               {cartItems?.map((item) => (
-                <Card key={item._id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center space-x-4">
-                      {/* Product Image */}
-                      <div className="shrink-0">
-                        <Image
-                          className="h-16 w-16 rounded-lg object-cover"
-                          src={item.imageUrl}
-                          alt={item.productName}
-                          width={64}
-                          height={64}
-                        />
+                <Card key={item._id} className={selectedItems.has(item._id) ? "border-emerald-500 border-2" : ""}>
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex items-start gap-3 flex-1">
+                        {/* Checkbox */}
+                        <div className="pt-1">
+                          <Checkbox
+                            checked={selectedItems.has(item._id)}
+                            onCheckedChange={() => toggleItemSelection(item._id)}
+                          />
+                        </div>
+                        {/* Product Image */}
+                        <div className="shrink-0">
+                          <Image
+                            className="h-16 w-16 rounded-lg object-cover"
+                            src={item.imageUrl}
+                            alt={item.productName}
+                            width={64}
+                            height={64}
+                          />
+                        </div>
+
+                        {/* Product Details */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-foreground line-clamp-2">
+                            {item.productName}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {formatCurrency(item.price)} each
+                          </p>
+                          
+                          {/* Quantity Controls - Mobile */}
+                          <div className="flex items-center space-x-2 mt-3 sm:hidden">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => decrementQuantity(item._id)}
+                              disabled={item.quantity <= 1}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-12 text-center font-medium">
+                              {item.quantity}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => incrementQuantity(item._id)}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Remove Button - Mobile */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeItem(item._id)}
+                          className="text-destructive hover:text-destructive sm:hidden"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
 
-                      {/* Product Details */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground line-clamp-2">
-                          {item.productName}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {formatCurrency(item.price)} each
-                        </p>
-                      </div>
-
-                      {/* Quantity Controls */}
-                      <div className="flex items-center space-x-2">
+                      {/* Quantity Controls - Desktop */}
+                      <div className="hidden sm:flex items-center space-x-2">
                         <Button
                           variant="outline"
                           size="icon"
@@ -207,19 +301,20 @@ export default function ShoppingCart() {
                         </Button>
                       </div>
 
-                      {/* Item Total */}
-                      <div className="text-right">
+                      {/* Item Total - Mobile: Bottom, Desktop: Right */}
+                      <div className="flex justify-between items-center sm:block sm:text-right">
+                        <span className="text-sm text-muted-foreground sm:hidden">Total:</span>
                         <p className="font-semibold text-lg">
                           {formatCurrency(item.price * item.quantity)}
                         </p>
                       </div>
 
-                      {/* Remove Button */}
+                      {/* Remove Button - Desktop */}
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => removeItem(item._id)}
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive hidden sm:flex"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -231,42 +326,51 @@ export default function ShoppingCart() {
 
             {/* Order Summary */}
             {cartItems && cartItems?.length > 0 && (
-              <div className="lg:col-span-1">
-                <Card className="sticky top-8">
-                  <CardHeader>
-                    <CardTitle>Order Summary</CardTitle>
+              <div className="lg:col-span-1 sticky top-20 h-fit">
+                <Card className=" py-6">
+                  <CardHeader className="">
+                    <CardTitle className="text-xl">Order Summary</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Subtotal ({cartItems.length} items)</span>
-                        <span>{formatCurrency(subtotal)}</span>
+                  <CardContent className="space-y-6">
+                    {/* Selected Items List */}
+                    {selectedCartItems.length > 0 && (
+                      <div className="space-y-3 max-h-60 overflow-y-auto">
+                        <p className="text-sm font-medium text-muted-foreground">Selected Items ({selectedCartItems.length})</p>
+                        {selectedCartItems.map((item) => (
+                          <div key={item._id} className="flex justify-between text-sm py-2 border-b">
+                            <div className="flex-1">
+                              <p className="font-medium line-clamp-1">{item.productName}</p>
+                              <p className="text-xs text-muted-foreground">Qty: {item.quantity} × {formatCurrency(item.price)}</p>
+                            </div>
+                            <p className="font-semibold">{formatCurrency(item.price * item.quantity)}</p>
+                          </div>
+                        ))}
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Shipping</span>
-                        <span>Free</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Tax</span>
-                        <span>₱0.00</span>
-                      </div>
-                    </div>
+                    )}
                     
                     <Separator />
                     
-                    <div className="flex justify-between font-semibold text-lg">
+                    <div className="flex justify-between font-bold text-xl">
                       <span>Total</span>
-                      <span>{formatCurrency(total)}</span>
+                      <span className="text-primary">{formatCurrency(total)}</span>
                     </div>
 
-                    <Button className="w-full" size="lg">
-                      Proceed to Checkout
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-
-                    <div className="text-center text-xs text-muted-foreground">
-                      <p>Secure checkout powered by Stripe</p>
-                    </div>
+                    {selectedItems.size > 0 ? (
+                      <Link 
+                        href={{
+                          pathname: "/checkout",
+                          query: { items: Array.from(selectedItems).join(',') }
+                        }} 
+                        className="w-full flex flex-row items-center justify-center bg-emerald-600 text-white px-4 py-3 rounded-md font-medium hover:bg-emerald-700 transition-colors"
+                      >
+                        Proceed to Checkout
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Link>
+                    ) : (
+                      <Button disabled className="w-full">
+                        Select items to checkout
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               </div>

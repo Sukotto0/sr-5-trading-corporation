@@ -644,18 +644,18 @@ const Sales = () => {
       {/* Dashboard Main Grid (Chart and Transactions) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 1. Sales Chart Area */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
-          <div className="flex justify-between items-center border-b pb-3 mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b pb-3 mb-4">
+            <h2 className="text-base md:text-lg font-semibold text-gray-900">
               Sales Performance Over Time
             </h2>
             {/* Chart Timeline Filter */}
             <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-500">Period:</label>
+              <label className="text-xs sm:text-sm font-medium text-gray-500">Period:</label>
               <select 
                 value={chartTimeFilter} 
                 onChange={(e) => setChartTimeFilter(e.target.value)}
-                className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="text-xs sm:text-sm border border-gray-300 rounded-md px-2 sm:px-3 py-1 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="7days">Last 7 Days</option>
                 <option value="30days">Last 30 Days</option>
@@ -666,57 +666,64 @@ const Sales = () => {
               </select>
             </div>
           </div>
-          <div className="h-80">
+          <div className="h-64 sm:h-80 md:h-96">
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 10 }}
                     stroke="#6b7280"
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
                   />
                   <YAxis 
                     yAxisId="left"
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 10 }}
                     stroke="#6b7280"
-                    label={{ value: 'Revenue (₱)', angle: -90, position: 'insideLeft' }}
+                    width={45}
                   />
                   <YAxis 
                     yAxisId="right"
                     orientation="right"
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 10 }}
                     stroke="#6b7280"
-                    label={{ value: 'Transactions', angle: 90, position: 'insideRight' }}
+                    width={40}
                   />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: '#f8fafc',
                       border: '1px solid #e2e8f0',
                       borderRadius: '8px',
-                      padding: '12px'
+                      padding: '8px',
+                      fontSize: '12px'
                     }}
                     formatter={(value: any, name: string) => {
                       if (name === 'Revenue') {
                         return [`₱${Number(value).toLocaleString()}`, 'Revenue'];
                       }
                       if (name === 'Total Transactions') {
-                        return [value, 'Total Transactions'];
+                        return [value, 'Transactions'];
                       }
                       if (name === 'Successful Orders') {
-                        return [value, 'Successful Orders'];
+                        return [value, 'Successful'];
                       }
                       return [value, name];
                     }}
                   />
-                  <Legend />
+                  <Legend 
+                    wrapperStyle={{ fontSize: '11px' }}
+                    iconSize={10}
+                  />
                   <Line 
                     yAxisId="left"
                     type="monotone" 
                     dataKey="revenue" 
                     stroke="#6366f1" 
-                    strokeWidth={3}
-                    dot={{ fill: '#6366f1', strokeWidth: 2, r: 4 }}
+                    strokeWidth={2}
+                    dot={{ fill: '#6366f1', strokeWidth: 1, r: 3 }}
                     name="Revenue"
                   />
                   <Line 
@@ -725,7 +732,7 @@ const Sales = () => {
                     dataKey="transactions" 
                     stroke="#10b981" 
                     strokeWidth={2}
-                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: '#10b981', strokeWidth: 1, r: 3 }}
                     name="Total Transactions"
                   />
                   <Line 
@@ -734,7 +741,7 @@ const Sales = () => {
                     dataKey="successful" 
                     stroke="#8b5cf6" 
                     strokeWidth={2}
-                    dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: '#8b5cf6', strokeWidth: 1, r: 3 }}
                     name="Successful Orders"
                   />
                 </LineChart>

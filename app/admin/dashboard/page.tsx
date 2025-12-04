@@ -10,6 +10,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Plus } from "lucide-react";
+import AnnouncementsSection from "@/components/AnnouncementsSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -507,144 +508,145 @@ const AdminDashboard = () => {
       </div>
 
       {/* Dashboard Grid */}
-      <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 1. Working Calendar Card */}
-        <div className="col-span-1 bg-red-950 rounded-xl shadow-lg overflow-hidden h-[520px] flex flex-col">
-          <CalendarHeader />
-          <div className="flex-1 p-4 bg-red-900/40">
-            <CalendarBody />
-          </div>
+      <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Announcements - Left Side (2 columns) */}
+        <div className="lg:col-span-2">
+          <AnnouncementsSection />
         </div>
 
-        {/* 2. Upcoming Events Card */}
-        <div className="col-span-1 bg-white rounded-xl shadow-lg overflow-hidden h-[520px] flex flex-col">
-          <div className="bg-red-950 text-white p-4 border-b border-red-800">
-            <div className="flex justify-between items-center mb-3">
-              <div className="flex-1">
-                <h3 className="text-lg font-bold">
-                  {timelineOptions.find(opt => opt.value === timelineFilter)?.label.toUpperCase() || "EVENTS"}
-                </h3>
-                <p className="text-xs font-light opacity-80">
-                  {today.toLocaleDateString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowAddEventModal(true)}
-                className="p-2 hover:bg-red-800/50 rounded-lg transition-colors shrink-0"
-                title="Add New Event"
-              >
-                <PlusIcon className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium opacity-90">Filter:</span>
-              <Select value={timelineFilter} onValueChange={setTimelineFilter}>
-                <SelectTrigger className="w-36 h-7 bg-red-800/50 border-red-700 text-white text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {timelineOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex-1 p-4 overflow-hidden flex flex-col">
-            {filteredEvents.length > 0 ? (
-              <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-                {filteredEvents.map((event) => {
-                  const eventDate = new Date(event.date);
-                  const eventTime = new Date(`1970-01-01T${event.time}`);
-
-                  return (
-                    <div
-                      key={event._id}
-                      className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 text-sm">
-                            {event.title}
-                          </h4>
-                          {event.description && (
-                            <p className="text-xs text-gray-600 mt-1">
-                              {event.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <CalendarIcon className="w-3 h-3" />
-                              {eventDate.toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                              })}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <ClockIcon className="w-3 h-3" />
-                              {eventTime.toLocaleTimeString("en-US", {
-                                hour: "numeric",
-                                minute: "2-digit",
-                                hour12: true,
-                              })}
-                            </div>
-                          </div>
-                          {event.location && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              📍 {event.location}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => handleEditEvent(event)}
-                            className="p-1 hover:bg-blue-100 rounded text-blue-600 transition-colors"
-                            title="Edit Event"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEvent(event._id)}
-                            className="p-1 hover:bg-red-100 rounded text-red-600 transition-colors"
-                            title="Delete Event"
-                          >
-                            <XMarkIcon className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-center">
-                <div>
-                  <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-400 font-medium text-lg">
-                    No {timelineFilter === "past" ? "past" : timelineFilter === "all" ? "" : timelineFilter} events
-                  </p>
-                  <p className="text-gray-400 text-sm mt-1">
-                    {timelineFilter === "past" 
-                      ? "No past events to show"
-                      : "Click + to add your first event"}
+        {/* Calendar & Events - Right Side (1 column) */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          {/* Upcoming Events Card - Compact */}
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-[380px]">
+            <div className="bg-red-950 text-white p-3 border-b border-red-800">
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex-1">
+                  <h3 className="text-base font-bold">
+                    {timelineFilter === "upcoming" ? "UPCOMING EVENTS" : timelineOptions.find(opt => opt.value === timelineFilter)?.label.toUpperCase() || "EVENTS"}
+                  </h3>
+                  <p className="text-xs font-light opacity-80">
+                    {today.toLocaleDateString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
                   </p>
                 </div>
+                <Button
+                  onClick={() => setShowAddEventModal(true)}
+                  className="bg-yellow-500 hover:bg-yellow-600 text-yellow-900 font-bold shrink-0"
+                >
+                  <PlusIcon className="w-4 h-4 mr-2" />
+                  Add New
+                </Button>
               </div>
-            )}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium opacity-90">Filter:</span>
+                <Select value={timelineFilter} onValueChange={setTimelineFilter}>
+                  <SelectTrigger className="w-32 h-7 bg-red-800/50 border-red-700 text-white text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timelineOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex-1 p-3 overflow-hidden flex flex-col">
+              {filteredEvents.length > 0 ? (
+                <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+                  {filteredEvents.map((event) => {
+                    const eventDate = new Date(event.date);
+                    const eventTime = new Date(`1970-01-01T${event.time}`);
+
+                    return (
+                      <div
+                        key={event._id}
+                        className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 text-sm">
+                              {event.title}
+                            </h4>
+                            {event.description && (
+                              <p className="text-xs text-gray-600 mt-1 line-clamp-1">
+                                {event.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <CalendarIcon className="w-3 h-3" />
+                                {eventDate.toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <ClockIcon className="w-3 h-3" />
+                                {eventTime.toLocaleTimeString("en-US", {
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                  hour12: true,
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-1 ml-2">
+                            <button
+                              onClick={() => handleEditEvent(event)}
+                              className="p-1 hover:bg-blue-100 rounded text-blue-600 transition-colors"
+                              title="Edit Event"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEvent(event._id)}
+                              className="p-1 hover:bg-red-100 rounded text-red-600 transition-colors"
+                              title="Delete Event"
+                            >
+                              <XMarkIcon className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-center px-2">
+                  <div>
+                    <CalendarIcon className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-400 font-medium text-sm">
+                      No {timelineFilter === "past" ? "past" : timelineFilter === "all" ? "" : timelineFilter} events
+                    </p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      {timelineFilter === "past" 
+                        ? "No past events to show"
+                        : "Click + to add event"}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Calendar Card - Compact */}
+          <div className="bg-red-950 rounded-xl shadow-lg overflow-hidden flex flex-col h-[390px]">
+            <CalendarHeader />
+            <div className="flex-1 p-3 bg-red-900/40">
+              <CalendarBody />
+            </div>
           </div>
         </div>
-
-        {/* 3. Vision & Mission Cards (Blue) */}
       </div>
 
       {/* Add Event Modal */}

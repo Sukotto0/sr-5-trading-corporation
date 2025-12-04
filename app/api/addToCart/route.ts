@@ -20,11 +20,13 @@ export async function POST(req: Request) {
       };
       const data = await db
         .collection("userCartItems")
-        .updateOne(
+        .findOneAndUpdate(
           { userId: sendData.userId, productId: sendData.productId },
           { $set: itemWithTimestamps }
         );
-      return NextResponse.json({ success: true, data }, { status: 200 });
+
+        // console.log("Item updated:", data);
+      return NextResponse.json({ success: true, data: {...data, insertedId: data?._id} }, { status: 200 });
     }
 
     // Add timestamps to the item data

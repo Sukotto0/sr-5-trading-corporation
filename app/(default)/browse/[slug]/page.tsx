@@ -1,6 +1,6 @@
 "use client";
-import { useState, useMemo } from "react";
-import { Filter, SortAsc, X, ChevronDown, Search } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Filter, SortAsc, X, ChevronDown, Search, MapPin } from "lucide-react";
 import {
   useFilters,
   useProducts,
@@ -85,6 +85,11 @@ export default function Browse({
     search: searchQuery,
   });
 
+  // Filter out products with 0 or negative quantity
+  const availableProducts = useMemo(() => {
+    return products.filter((product) => product.quantity > 0);
+  }, [products]);
+
   // Handle filter changes
   const handleFilterChange = (
     filterId: string,
@@ -102,6 +107,10 @@ export default function Browse({
     });
   };
 
+  useEffect(() => {
+    console.log(products)
+  }, [products])
+  
   // Handle sort changes
   const handleSortChange = (sortValue: string) => {
     setCurrentSort(sortValue);
@@ -561,7 +570,7 @@ export default function Browse({
                     </Card>
                   ))}
                 </div>
-              ) : products.length === 0 ? (
+              ) : availableProducts.length === 0 ? (
                 <Card className="text-center py-12">
                   <CardContent>
                     <h3 className="text-lg font-medium mb-2">
@@ -579,12 +588,12 @@ export default function Browse({
                 <>
                   <div className="flex items-center justify-between mb-6">
                     <p className="text-sm text-muted-foreground">
-                      Showing {products.length} products
+                      Showing {availableProducts.length} products
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {products.map((product) => (
+                    {availableProducts.map((product) => (
                       <Link
                         key={product.id}
                         href={
@@ -608,13 +617,17 @@ export default function Browse({
                             <h3 className="font-medium line-clamp-2 mb-2 text-sm sm:text-base">
                               {product.name}
                             </h3>
-                            <div className="flex items-center justify-between">
-                              <div className="space-y-1">
-                                <p className="text-lg sm:text-2xl font-bold text-primary">
-                                  ₱{Number(product.price).toLocaleString()}
-                                </p>
+                            <div className="space-y-2">
+                              <p className="text-lg sm:text-2xl font-bold text-primary">
+                                ₱{Number(product.price).toLocaleString()}
+                              </p>
+                              <div className="flex flex-wrap gap-2">
                                 <Badge variant="secondary" className="text-xs">
                                   {product.quantity} in stock
+                                </Badge>
+                                <Badge variant="outline" className="text-xs flex items-center gap-1 capitalize">
+                                  <MapPin className="h-3 w-3" />
+                                  {product.branch}
                                 </Badge>
                               </div>
                             </div>

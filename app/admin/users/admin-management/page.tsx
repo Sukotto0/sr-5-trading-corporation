@@ -647,28 +647,30 @@ const AdminManagement = () => {
   };
 
   return (
-    <div className="bg-gray-50 p-6 sm:p-8 min-h-screen">
+    <div className="bg-gray-50 p-4 sm:p-6 md:p-8 min-h-screen">
       {/* Header */}
       <header className="mb-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-extrabold text-gray-900">
-            Branch & Super Admin Management
-          </h1>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+              Branch & Super Admin Management
+            </h1>
+            <p className="text-sm text-gray-500 mt-2 flex items-center">
+              <ClockIcon className="w-4 h-4 mr-1" /> Access Control Last Checked:{" "}
+              {currentTime}
+            </p>
+          </div>
           {isSuperAdmin && (
             <button
               type="button"
               onClick={openAddModal}
-              className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-xl shadow-md hover:bg-indigo-700 transition duration-150 text-sm font-semibold"
+              className="flex items-center justify-center bg-indigo-600 text-white px-4 py-2 rounded-xl shadow-md hover:bg-indigo-700 transition duration-150 text-sm font-semibold w-full sm:w-auto shrink-0"
             >
               <UserPlusIcon className="w-5 h-5 mr-2" />
               Grant New Admin
             </button>
           )}
         </div>
-        <p className="text-sm text-gray-500 mt-2 flex items-center">
-          <ClockIcon className="w-4 h-4 mr-1" /> Access Control Last Checked:{" "}
-          {currentTime}
-        </p>
       </header>
 
       {/* KPI Cards Grid - Now displays all branch counts */}
