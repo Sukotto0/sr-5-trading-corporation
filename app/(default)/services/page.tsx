@@ -46,7 +46,9 @@ export default function App() {
 
   useEffect(() => {
     getServices().then((data) => {
-      setServiceOfferings(data.data);
+      // Sort by order field
+      const sortedData = data.data.sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
+      setServiceOfferings(sortedData);
     });
   }, []);
 
@@ -86,21 +88,23 @@ export default function App() {
                 </h2>
                 <div className="mb-4">
                   <p
-                    className={`text-gray-700 text-sm ${truncate[i] ? "truncate" : ""}`}
+                    className={`text-gray-700 text-sm ${truncate[i] && service.description.length > 100 ? "truncate" : ""}`}
                   >
                     {service.description}
                   </p>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const newTruncate = [...truncate];
-                      newTruncate[i] = !newTruncate[i];
-                      setTruncate(newTruncate);
-                    }}
-                    className="text-green-600 text-sm hover:text-black hover:cursor-pointer"
-                  >
-                    {truncate[i] ? "Read More" : "Show Less"}
-                  </button>
+                  {service.description.length > 100 && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const newTruncate = [...truncate];
+                        newTruncate[i] = !newTruncate[i];
+                        setTruncate(newTruncate);
+                      }}
+                      className="text-green-600 text-sm hover:text-black hover:cursor-pointer"
+                    >
+                      {truncate[i] ? "Read More" : "Show Less"}
+                    </button>
+                  )}
                 </div>
                 <ul className="space-y-2 text-sm text-gray-700 max-h-40 overflow-y-auto mb-6">
                   {service.offers.map((offer, index) => (
@@ -120,7 +124,6 @@ export default function App() {
                     </li>
                   ))}
                 </ul>
-                <Link href={`/schedule?purpose=${service.offers[0]}`} className="mt-auto w-full text-center bg-red-950 rounded shadow text-white px-3 py-2 ">Inquire Now</Link>
               </div>
             );
           })}

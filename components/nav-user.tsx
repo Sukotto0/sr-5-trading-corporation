@@ -25,7 +25,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { SignOutButton } from "@clerk/nextjs";
+import { SignOutButton, UserProfile } from "@clerk/nextjs";
+import Link from "next/link";
 
 export function NavUser({
   user,
@@ -47,7 +48,7 @@ export function NavUser({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
+              <Avatar className="h-6 w-6 rounded-lg">
                 <AvatarImage src={user.imageUrl} alt={user.name} />
                 <AvatarFallback className="rounded-lg">SR</AvatarFallback>
               </Avatar>
@@ -79,15 +80,17 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+                <Link href="/admin/profile" className="w-full flex flex-row items-center gap-2">
+                  <BadgeCheck className="mr-2" />
+                      Profile
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <SignOutButton>
                 <div className="flex flex-row items-center text-red-700 font-bold">
-                  <LogOut className="mr-2" color="#c10007"/>
+                  <LogOut className="mr-2" color="#c10007" />
                   Log out
                 </div>
               </SignOutButton>

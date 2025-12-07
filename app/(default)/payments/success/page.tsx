@@ -235,11 +235,32 @@ const SuccessfulPayments = (props: any) => {
                     : ""
                 }
               />
-              <DetailItem
-                icon={Download}
-                label="Item"
-                value={transactionData.productName}
-              />
+              {/* Items List */}
+              <div className="py-3 border-b border-gray-100">
+                <div className="flex items-start space-x-3 mb-3">
+                  <Download className="w-5 h-5 text-emerald-500" />
+                  <span className="text-sm font-medium text-gray-700">Items</span>
+                </div>
+                <div className="ml-8 space-y-2">
+                  {transactionData.items && transactionData.items.length > 0 ? (
+                    transactionData.items.map((item: any, index: number) => (
+                      <div key={index} className="flex justify-between items-start text-sm py-2 border-b border-gray-50 last:border-b-0">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{item.name}</p>
+                          <p className="text-xs text-gray-500">
+                            Quantity: {item.quantity} × {formatCurrency(item.amount.value)}
+                          </p>
+                        </div>
+                        <p className="font-semibold text-gray-900 ml-4">
+                          {formatCurrency(item.totalAmount.value)}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">No items</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -103,12 +103,12 @@ const AppointmentDetailModal = ({ appointment, onClose }: any) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 bg-opacity-75 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/40 bg-opacity-75 z-50 flex items-center justify-center p-4 overflow-y-auto"
       onClick={onClose}
     >
       {/* Modal Card */}
       <div
-        className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all scale-100"
+        className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all scale-100 my-8 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header (Themed) */}
@@ -123,7 +123,7 @@ const AppointmentDetailModal = ({ appointment, onClose }: any) => {
         </div>
 
         {/* Details Body */}
-        <div className="p-6 sm:p-8 space-y-4">
+        <div className="p-6 sm:p-8 space-y-4 overflow-y-auto flex-1">
           <div className="grid grid-cols-1 gap-4">
             <DetailRow
               icon={Calendar}
@@ -212,6 +212,7 @@ const AppointmentsPage = () => {
 
   useEffect(() => {
     if (user?.id) {
+      console.log("🔑 Your Clerk userId:", user.id);
       setLoading(true);
       getAppointmentsByUser(user.id)
         .then((data) => {
@@ -221,6 +222,7 @@ const AppointmentsPage = () => {
             const userAppointments = data.filter(
               (appointment: Appointment) => appointment.userId === user.id
             );
+            console.log("Filtered user appointments:", userAppointments.length);
             setAppointments(userAppointments);
           }
           setLoading(false);
@@ -456,8 +458,8 @@ const AppointmentsPage = () => {
         {/* --- Footer / Pagination Area --- */}
         {!loading && totalItems > 0 && (
           <div className="p-4 sm:p-6 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600 border-t border-gray-200">
-            <div className="flex items-center gap-4">
-              <span>
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+              <span className="whitespace-nowrap">
                 Showing {showingFrom} to {showingTo} of {totalItems} results
               </span>
               <div className="flex items-center gap-2">
@@ -475,28 +477,29 @@ const AppointmentsPage = () => {
                   <option value={25}>25</option>
                   <option value={50}>50</option>
                 </select>
-                <span>per page</span>
+                <span className="hidden sm:inline">per page</span>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={goToPrevPage}
                 disabled={currentPage === 1}
-                className={`px-3 py-1 rounded font-semibold transition duration-150 ${
+                className={`px-3 py-1 rounded font-semibold transition duration-150 text-sm ${
                   currentPage === 1
                     ? "text-gray-400 cursor-not-allowed"
                     : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                 }`}
               >
-                Previous
+                <span className="hidden sm:inline">Previous</span>
+                <span className="sm:hidden">Prev</span>
               </button>
-              <span className="px-2">
+              <span className="px-2 text-xs sm:text-sm whitespace-nowrap">
                 Page {currentPage} of {totalPages}
               </span>
               <button
                 onClick={goToNextPage}
                 disabled={currentPage === totalPages}
-                className={`px-3 py-1 rounded font-semibold transition duration-150 ${
+                className={`px-3 py-1 rounded font-semibold transition duration-150 text-sm ${
                   currentPage === totalPages
                     ? "text-gray-400 cursor-not-allowed"
                     : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"

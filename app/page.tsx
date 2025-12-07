@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { BarChart, Users, TrendingUp, MapPin, ChevronDown } from "lucide-react";
+import React, { useRef, useState, useEffect } from "react";
+import { Users, MapPin, ChevronDown, ShoppingCart, Calendar } from "lucide-react";
 import Autoplay from "embla-carousel-autoplay";
 import {
   Carousel,
@@ -20,6 +20,32 @@ const Dashboard = () => {
   );
 
   const [activeFAQ, setActiveFAQ] = useState<number | null>(null);
+  const [statsData, setStatsData] = useState({
+    totalUsers: 0,
+    totalSales: 0,
+    totalAppointments: 0,
+  });
+
+  useEffect(() => {
+    // Fetch stats data
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/stats');
+        if (response.ok) {
+          const data = await response.json();
+          setStatsData({
+            totalUsers: data.totalUsers || 0,
+            totalSales: data.totalSales || 0,
+            totalAppointments: data.totalAppointments || 0,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+    
+    fetchStats();
+  }, []);
 
   // Hero Slides
   const heroSlides = [
@@ -32,22 +58,22 @@ const Dashboard = () => {
     {
       id: 2,
       image: "/images/HeroBanner2.jpg",
-      title: "Browse Our Products",
-      subtitle: "Explore Our Latest Inventory.",
+      title: "Explore Our Inventory",
+      subtitle: "Discover Quality Products and Parts",
       link: "/browse/trucks",
     },
     {
       id: 3,
       image: "/images/HeroBanner3.jpg",
-      title: "Services we Offer",
-      subtitle: "We Offer Automotive Sevices.",
+      title: "Expert Automotive Care",
+      subtitle: "Professional Service You Can Trust",
       link: "/services",
     },
     {
       id: 4,
       image: "/images/HeroBanner4.jpg",
-      title: "Come Visit Us",
-      subtitle: "Visit One Of Our Branches.",
+      title: "Visit Us Today",
+      subtitle: "Three Convenient Locations to Serve You",
       link: "/schedule",
     },
   ];
@@ -57,22 +83,22 @@ const Dashboard = () => {
     {
       id: 1,
       icon: Users,
-      value: "1,200+",
-      label: "Active Members",
+      value: `${statsData.totalUsers.toLocaleString()}`,
+      label: "Users",
       color: "text-blue-500",
     },
     {
       id: 2,
-      icon: TrendingUp,
-      value: "98%",
-      label: "Growth Rate",
+      icon: ShoppingCart,
+      value: `${statsData.totalSales.toLocaleString()}`,
+      label: "Transactions",
       color: "text-green-500",
     },
     {
       id: 3,
-      icon: BarChart,
-      value: "450+",
-      label: "Projects Completed",
+      icon: Calendar,
+      value: `${statsData.totalAppointments.toLocaleString()}`,
+      label: "Appointments",
       color: "text-purple-500",
     },
     {
@@ -150,17 +176,17 @@ const Dashboard = () => {
                   </p>
                   {slide.link && !isSignedIn && slide.link == "/schedule" ? (
                     <SignInButton mode="modal">
-                      <div className="px-3 py-2 bg-white/95 rounded shadow text-black/95 hover:cursor-pointer hover:bg-white/85">
-                        Go now
+                      <div className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer">
+                        Get Started
                       </div>
                     </SignInButton>
                   ) : (
                     slide.link && (
                       <Link
                         href={slide.link}
-                        className="px-3 py-2 bg-white/95 rounded shadow text-black/95"
+                        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 inline-block"
                       >
-                        Go now
+                        Get Started
                       </Link>
                     )
                   )}
@@ -191,13 +217,43 @@ const Dashboard = () => {
       </div>
 
       {/* About */}
-      <div className="w-full max-w-4xl text-center px-6 py-16">
-        <h1 className="text-4xl font-extrabold tracking-tight">
-          {about.title}
-        </h1>
-        <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-          {about.description}
-        </p>
+      <div className="w-full bg-gradient-to-br from-emerald-50 to-white py-20">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+              {about.title}
+            </h1>
+            <div className="w-24 h-1 bg-emerald-600 mx-auto rounded-full"></div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 border-t-4 border-emerald-600">
+            <p className="text-lg md:text-xl text-gray-700 leading-relaxed text-center">
+              {about.description}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+              <div className="flex flex-col items-center p-6 bg-emerald-50 rounded-xl">
+                <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-2">Customer First</h3>
+                <p className="text-sm text-gray-600 text-center">Dedicated to your satisfaction</p>
+              </div>
+              <div className="flex flex-col items-center p-6 bg-emerald-50 rounded-xl">
+                <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center mb-4">
+                  <ShoppingCart className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-2">Quality Service</h3>
+                <p className="text-sm text-gray-600 text-center">Excellence in every detail</p>
+              </div>
+              <div className="flex flex-col items-center p-6 bg-emerald-50 rounded-xl">
+                <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center mb-4">
+                  <MapPin className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-2">Multiple Locations</h3>
+                <p className="text-sm text-gray-600 text-center">Conveniently located near you</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Location */}
@@ -216,34 +272,50 @@ const Dashboard = () => {
       </div> */}
 
       {/* FAQ */}
-      <div className="w-full max-w-5xl px-6 py-16">
-        <h1 className="text-4xl font-extrabold text-center mb-8">
-          Frequently Asked Questions
-        </h1>
-        <div className="space-y-4">
-          {faqs.map((faq, idx) => (
-            <div
-              key={idx}
-              className="bg-white shadow-md rounded-lg p-6 cursor-pointer"
-            >
-              <button
-                className="flex justify-between items-center w-full text-left font-semibold text-lg text-gray-800"
-                onClick={() => setActiveFAQ(activeFAQ === idx ? null : idx)}
+      <div className="w-full bg-white py-20">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+              Frequently Asked Questions
+            </h1>
+            <div className="w-24 h-1 bg-emerald-600 mx-auto rounded-full"></div>
+            <p className="mt-4 text-gray-600">Find answers to common questions about our services</p>
+          </div>
+          <div className="space-y-4">
+            {faqs.map((faq, idx) => (
+              <div
+                key={idx}
+                className={`bg-white shadow-lg rounded-xl overflow-hidden transition-all duration-300 border-2 ${
+                  activeFAQ === idx ? "border-emerald-600" : "border-gray-100 hover:border-emerald-300"
+                }`}
               >
-                {faq.question}
-                <ChevronDown
-                  className={`w-5 h-5 transition-transform duration-300 ${
-                    activeFAQ === idx ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-              {activeFAQ === idx && (
-                <p className="mt-3 text-gray-600 leading-relaxed">
-                  {faq.answer}
-                </p>
-              )}
-            </div>
-          ))}
+                <button
+                  className="flex justify-between items-center w-full text-left p-6 bg-gradient-to-r from-white to-emerald-50/30"
+                  onClick={() => setActiveFAQ(activeFAQ === idx ? null : idx)}
+                >
+                  <span className="font-semibold text-lg text-gray-900 pr-4">
+                    {faq.question}
+                  </span>
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    activeFAQ === idx ? "bg-emerald-600" : "bg-gray-200"
+                  }`}>
+                    <ChevronDown
+                      className={`w-5 h-5 transition-transform duration-300 ${
+                        activeFAQ === idx ? "rotate-180 text-white" : "text-gray-600"
+                      }`}
+                    />
+                  </div>
+                </button>
+                {activeFAQ === idx && (
+                  <div className="px-6 pb-6 pt-2 bg-emerald-50/50">
+                    <p className="text-gray-700 leading-relaxed">
+                      {faq.answer}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

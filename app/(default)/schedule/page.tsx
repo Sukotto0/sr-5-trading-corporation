@@ -40,13 +40,18 @@ function ScheduleVisitComponent() {
     location: "",
     purpose: "",
     details: "",
+    userId: user?.id || "",
   });
 
   useEffect(() => {
-    formData.firstName = user?.firstName || "";
-    formData.surname = user?.lastName || "";
-    formData.email = user?.primaryEmailAddress?.emailAddress || "";
-    formData.purpose = searchParams.get("purpose") || "";
+    setFormData(prev => ({
+      ...prev,
+      firstName: user?.firstName || "",
+      surname: user?.lastName || "",
+      email: user?.primaryEmailAddress?.emailAddress || "",
+      purpose: searchParams.get("purpose") || "",
+      userId: user?.id || "",
+    }));
   }, [user, searchParams]);
 
   const [serviceOfferings, setServiceOfferings] = useState<serviceOffering[]>(
@@ -89,29 +94,48 @@ function ScheduleVisitComponent() {
 
   useEffect(() => {
     getServices().then((data) => {
-      setServiceOfferings(data.data);
+      // Filter out TEST DRIVE A VEHICLE and sort by order
+      const filteredData = data.data
+        .filter((service: serviceOffering) => service.name !== "TEST DRIVE A VEHICLE")
+        .sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
+      setServiceOfferings(filteredData);
     });
   }, []);
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    
+    // Validate userId is present
+    if (!formData.userId) {
+      alert("Please sign in to schedule an appointment.");
+      return;
+    }
+    
     setIsSubmitting(true);
     createAppointment(formData).then((data) => {
       setIsSubmitting(false);
-      alert("Appointment scheduled successfully!");
-      // Optionally, reset the form or redirect the user here
-
-      setFormData({
-        firstName: user?.firstName || "",
-        surname: user?.lastName || "",
-        contactNumber: "",
-        email: user?.primaryEmailAddress?.emailAddress || "",
-        preferredDate: "",
-        preferredTime: "",
-        location: "",
-        purpose: "",
-        details: "",
-      });
+      if (data.success) {
+        alert("Appointment scheduled successfully!");
+        // Reset the form
+        setFormData({
+          firstName: user?.firstName || "",
+          surname: user?.lastName || "",
+          contactNumber: "",
+          email: user?.primaryEmailAddress?.emailAddress || "",
+          preferredDate: "",
+          preferredTime: "",
+          location: "",
+          purpose: "",
+          details: "",
+          userId: user?.id || "",
+        });
+      } else {
+        alert("Failed to schedule appointment: " + (data.error || "Unknown error"));
+      }
+    }).catch((error) => {
+      setIsSubmitting(false);
+      alert("Failed to schedule appointment. Please try again.");
+      console.error("Appointment error:", error);
     });
   }
 
@@ -309,6 +333,7 @@ function ScheduleVisitComponent() {
                     <option value="" disabled>
                       Select a Service
                     </option>
+                    <option value="Visit onsite">Visit onsite</option>
                     {serviceOfferings.map((data, i) => (
                       <optgroup key={i} label={data.name}>
                         {data.offers.map((offer, j) => (

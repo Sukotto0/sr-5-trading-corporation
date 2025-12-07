@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
 export interface FilterOption {
   value: string;
@@ -23,8 +23,10 @@ export interface Product {
   quantity: number;
   category: string;
   location: string;
+  branch: string;
   createdAt?: string;
   lastUpdated?: string;
+  images?: string[];
 }
 
 export interface ProductsQueryParams {
@@ -40,15 +42,15 @@ export interface ProductsQueryParams {
 // Fetch filters
 export const useFilters = () => {
   return useQuery({
-    queryKey: ['filters'],
+    queryKey: ["filters"],
     queryFn: async (): Promise<Filter[]> => {
-      const response = await fetch('/api/filters');
+      const response = await fetch("/api/filters");
       if (!response.ok) {
-        throw new Error('Failed to fetch filters');
+        throw new Error("Failed to fetch filters");
       }
       const data = await response.json();
       if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch filters');
+        throw new Error(data.error || "Failed to fetch filters");
       }
       return data.data;
     },
@@ -60,7 +62,10 @@ export const useFilters = () => {
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      trendIcon: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+      trendIcon: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      >;
     }
   }
 }
@@ -68,23 +73,23 @@ declare global {
 // Fetch products with filters
 export const useProducts = (params: ProductsQueryParams = {}) => {
   const searchParams = new URLSearchParams();
-  
+
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
+    if (value !== undefined && value !== null && value !== "") {
       searchParams.append(key, String(value));
     }
   });
 
   return useQuery({
-    queryKey: ['products', params],
+    queryKey: ["products", params],
     queryFn: async (): Promise<Product[]> => {
       const response = await fetch(`/api/products?${searchParams.toString()}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch products');
+        throw new Error("Failed to fetch products");
       }
       const data = await response.json();
       if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch products');
+        throw new Error(data.error || "Failed to fetch products");
       }
       return data.data;
     },

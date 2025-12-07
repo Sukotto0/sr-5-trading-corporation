@@ -119,6 +119,84 @@ export const uploadImageToBlob = async (file: File): Promise<string> => {
   }
 };
 
+export async function getAnnouncements() {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/announcements`,
+    { method: "GET", cache: "no-store" }
+  );
+
+  const data = await response.json();
+  if (data.success) {
+    return data.announcements;
+  }
+  return [];
+}
+
+export async function createAnnouncement(announcementData: {
+  title: string;
+  description: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileType?: string;
+  userId: string;
+}) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/announcements`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(announcementData),
+    }
+  );
+
+  const data = await response.json();
+  return data;
+}
+
+export async function updateAnnouncement(
+  id: string,
+  announcementData: {
+    title: string;
+    description: string;
+    fileUrl?: string;
+    fileName?: string;
+    fileType?: string;
+  },
+  userId: string
+) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/announcements`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id, ...announcementData, userId }),
+    }
+  );
+
+  const data = await response.json();
+  return data;
+}
+
+export async function deleteAnnouncement(id: string, userId: string) {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/announcements?id=${id}&userId=${userId}`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id, userId }),
+    }
+  );
+
+  const data = await response.json();
+  return data;
+}
+
 export async function createReservation(formData: FormData) {
   console.log("Creating reservation...");
 
@@ -746,3 +824,40 @@ export async function deleteAdmin(adminId: string) {
     return false;
   }
 }
+
+export async function createCheckoutOnsite(data: any) {
+  // console.log(data)
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/createTransaction`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  const responseData = await response.json();
+  return responseData;
+}
+
+// export async function createCheckoutOnline(data: any) {
+//   const response = await fetch(
+//     `${process.env.NEXT_PUBLIC_BASE_URL}/api/createTransaction`,
+//     {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify(data),
+//     }
+//   );
+//   if (!response.ok) {
+//     throw new Error(`HTTP error! status: ${response.status}`);
+//   }
+//   const responseData = await response.json();
+//   return responseData;
+// }

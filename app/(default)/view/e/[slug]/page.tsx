@@ -4,6 +4,7 @@ import { addToCart, getProduct } from "@/app/actions";
 import { Product } from "@/hooks/useQuery";
 import Image from "next/image";
 import { SignInButton, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
   Package, 
@@ -15,7 +16,9 @@ import {
   Lock,
   Truck,
   Shield,
-  RefreshCw
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,18 +39,47 @@ export default function ProductDetail({
   const [addToCartLoading, setAddToCartLoading] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState<string>("");
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const { slug } = use(params);
+  const router = useRouter();
 
   const { isSignedIn, user } = useUser();
 
   useEffect(() => {
     async function fetchProduct() {
       const fetchedProduct = await getProduct(slug);
-      setProduct(fetchedProduct.data || null);
+      const product = fetchedProduct.data;
+      setProduct(product || null);
+      
+      // Initialize carousel with first image
+      const initialImage = product?.images && product.images.length > 0 ? product.images[0] : product?.imageUrl || "";
+      setSelectedImage(initialImage);
+      setCurrentImageIndex(0);
+      
       setInitialLoad(false);
     }
     fetchProduct();
   }, [slug]);
+
+  const handleNextImage = () => {
+    if (!product?.images || product.images.length <= 1) return;
+    const nextIndex = (currentImageIndex + 1) % product.images.length;
+    setCurrentImageIndex(nextIndex);
+    setSelectedImage(product.images[nextIndex]);
+  };
+
+  const handlePreviousImage = () => {
+    if (!product?.images || product.images.length <= 1) return;
+    const prevIndex = currentImageIndex === 0 ? product.images.length - 1 : currentImageIndex - 1;
+    setCurrentImageIndex(prevIndex);
+    setSelectedImage(product.images[prevIndex]);
+  };
+
+  const handleThumbnailClick = (image: string, index: number) => {
+    setSelectedImage(image);
+    setCurrentImageIndex(index);
+  };
 
   const handleAddToCart = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +108,28 @@ export default function ProductDetail({
     const newQuantity = quantity + change;
     if (newQuantity >= 1 && newQuantity <= (product?.quantity || 1)) {
       setQuantity(newQuantity);
+    }
+  };
+
+  const handleBuyNow = async () => {
+    if (!product || !user?.id) return;
+    
+    // First add to cart
+    const formData = new FormData();
+    formData.append("productId", slug);
+    formData.append("productName", product.name || "");
+    formData.append("userId", user.id);
+    formData.append("price", product.price.toString());
+    formData.append("quantity", quantity.toString());
+    formData.append("imageUrl", product.imageUrl || "");
+
+    const response = await addToCart(Object.fromEntries(formData.entries()));
+    console.log(response)
+    if (response.success && response.data?.insertedId) {
+      // Navigate to checkout with this item's ID
+      router.push(`/checkout?items=${response.data.insertedId}`);
+    } else {
+      alert("Failed to process. Please try again.");
     }
   };
 
@@ -165,21 +219,84 @@ export default function ProductDetail({
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Product Image */}
+          {/* Product Image with Carousel */}
           <div className="space-y-4">
             <Card className="overflow-hidden py-0">
               <CardContent className="p-0">
-                <div className="aspect-square relative overflow-hidden">
+                <div className="aspect-square relative overflow-hidden group">
                   <Image
-                    src={product.imageUrl}
+                    src={selectedImage || product.imageUrl}
                     alt={product.name}
                     fill
                     className="object-cover transition-transform duration-300 hover:scale-105"
                     sizes="(max-width: 768px) 100vw, 50vw"
+                    priority
                   />
+                  
+                  {/* Navigation Arrows - Only show if multiple images */}
+                  {(() => {
+                    const allImages = product.images && product.images.length > 0 
+                      ? product.images 
+                      : product.imageUrl 
+                      ? [product.imageUrl] 
+                      : [];
+                    return allImages.length > 1 ? (
+                      <>
+                        {/* Left Arrow */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white/90"
+                          onClick={handlePreviousImage}
+                        >
+                          <ChevronLeft className="h-6 w-6" />
+                        </Button>
+                        
+                        {/* Right Arrow */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white/90"
+                          onClick={handleNextImage}
+                        >
+                          <ChevronRight className="h-6 w-6" />
+                        </Button>
+                        
+                        {/* Image Counter */}
+                        <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-sm">
+                          {currentImageIndex + 1} / {allImages.length}
+                        </div>
+                      </>
+                    ) : null;
+                  })()}
                 </div>
               </CardContent>
             </Card>
+
+            {/* Thumbnail Gallery - Only show if multiple images */}
+            {product.images && product.images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {product.images.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleThumbnailClick(img, index)}
+                    className={`relative w-20 h-20 shrink-0 rounded-md overflow-hidden border-2 transition-all ${
+                      currentImageIndex === index
+                        ? 'ring-2 ring-primary border-primary'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <Image
+                      src={img}
+                      alt={`${product.name} - Image ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="80px"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Product Details Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -308,7 +425,8 @@ export default function ProductDetail({
                     variant="secondary"
                     size="lg"
                     className="w-full"
-                    disabled={isOutOfStock}
+                    onClick={handleBuyNow}
+                    disabled={isOutOfStock || addToCartLoading}
                   >
                     <ShoppingCart className="h-5 w-5 mr-2" />
                     Buy Now
