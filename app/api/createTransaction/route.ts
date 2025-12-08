@@ -80,6 +80,7 @@ export async function POST(request: Request) {
           userId,
           appointment,
           branch,
+          items,
         },
         requestReferenceNumber: referenceNumber,
       };
@@ -167,13 +168,7 @@ export async function POST(request: Request) {
         .collection("userCartItems")
         .deleteOne({ productId: item.code, userId: userId });
 
-      await db.collection("inventory").updateOne(
-        { _id: new ObjectId(item.code) },
-        { 
-          $inc: { quantity: -item.quantity },
-          $set: { lastUpdated: new Date().toISOString() }
-        }
-      );
+      
     });
 
     // Return appropriate response based on payment method

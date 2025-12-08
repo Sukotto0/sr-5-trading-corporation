@@ -35,16 +35,16 @@ type AdminStats = {
   superAdmins: number;
   imusBranch: number;
   bacoorBranch: number;
-  albayBranch: number;
+  camaligBranch: number;
 };
 
 // --- Configuration Data ---
 
 // Branches that should have their admin count tracked in KPIs
-const BRANCHES_FOR_KPI = ["Imus Branch", "Bacoor Branch", "Albay Branch"];
+const BRANCHES_FOR_KPI = ["Imus Branch", "Bacoor Branch", "Camalig Branch"];
 
 // Full list of available branches for the dropdown
-const availableBranches = ["Imus", "Bacoor", "Albay"];
+const availableBranches = ["Imus", "Bacoor", "Camalig"];
 
 const availableRoles = ["admin", "superadmin"];
 
@@ -90,11 +90,11 @@ const generateAdminKpiData = (stats: AdminStats) => {
       color: "blue",
     },
     {
-      name: "Albay Branch Admins",
+      name: "Camalig Branch Admins",
       icon: BuildingStorefrontIcon,
-      value: stats.albayBranch.toString(),
+      value: stats.camaligBranch.toString(),
       trend: 3.0,
-      isPositive: stats.albayBranch > 0,
+      isPositive: stats.camaligBranch > 0,
       color: "blue",
     },
   ];
@@ -407,7 +407,7 @@ const AdminFormModal = ({
             >
               <option value="Imus">Imus Branch</option>
               <option value="Bacoor">Bacoor Branch</option>
-              <option value="Albay">Albay Branch</option>
+              <option value="Camalig">Camalig Branch</option>
             </select>
           </div>
         )}
@@ -513,7 +513,7 @@ const AdminManagement = () => {
     superAdmins: 0,
     imusBranch: 0,
     bacoorBranch: 0,
-    albayBranch: 0
+    camaligBranch: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -555,7 +555,7 @@ const AdminManagement = () => {
           superAdmins: 0,
           imusBranch: 0,
           bacoorBranch: 0,
-          albayBranch: 0
+          camaligBranch: 0
         });
       }
     } catch (error) {

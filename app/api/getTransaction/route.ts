@@ -16,15 +16,15 @@ export async function GET(req: Request) {
     const transactionId = url.searchParams.get("id");
     const paymentStatus = url.searchParams.get("type");
 
-    if (transactionId) {
-      await db.collection<Transaction>("transactions").updateOne(
-        { _id: transactionId },
-        { $set: { status: paymentStatus || "unknown" } }
-      );
+    if (transactionId && !paymentStatus) {
+      const data = await db.collection<Transaction>("transactions").findOne({ _id: transactionId });
+      return NextResponse.json({ success: true, data });
+    }
 
+    if (transactionId) {
       const data = await db
         .collection<Transaction>("transactions")
-        .findOne({ _id: transactionId });
+        .findOne({ _id: transactionId, mayaStatus: paymentStatus });
       return NextResponse.json({ success: true, data });
     } else {
       return NextResponse.json({

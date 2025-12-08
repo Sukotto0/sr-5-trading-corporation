@@ -583,7 +583,7 @@ const Inventory = () => {
                     <SelectItem value="all">All Locations</SelectItem>
                     <SelectItem value="bacoor">Bacoor</SelectItem>
                     <SelectItem value="imus">Imus</SelectItem>
-                    <SelectItem value="albay">Albay</SelectItem>
+                    <SelectItem value="camalig">Camalig</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

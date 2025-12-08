@@ -60,9 +60,9 @@ export async function GET(req: Request) {
       return metadata?.assignedBranch === "Bacoor";
     }).length;
 
-    const albayBranch = branchAdmins.filter((user) => {
+    const camaligBranch = branchAdmins.filter((user) => {
       const metadata = user.publicMetadata as any;
-      return metadata?.assignedBranch === "Albay";
+      return metadata?.assignedBranch === "Camalig";
     }).length;
 
     const stats = {
@@ -70,7 +70,7 @@ export async function GET(req: Request) {
       superAdmins: superAdmins.length,
       imusBranch,
       bacoorBranch,
-      albayBranch,
+      camaligBranch,
     };
 
     // Format admin data

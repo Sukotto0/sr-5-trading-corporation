@@ -10,8 +10,21 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const userId = url.searchParams.get("userId");
     if (userId) {
-      const data = await db.collection("userCartItems").find({ userId: userId }).toArray();
-      return NextResponse.json({ success: true, data });
+      const cartItems = await db.collection("userCartItems").find({ userId: userId }).toArray();
+      
+      // Fetch current stock and location for each product from inventory collection
+      const enrichedCartItems = await Promise.all(
+        cartItems.map(async (item) => {
+          const inventory = await db.collection("inventory").findOne({ _id: new ObjectId(item.productId) });
+          return {
+            ...item,
+            availableStock: inventory?.quantity || 0,
+            location: inventory?.location || "Albay",
+          };
+        })
+      );
+      
+      return NextResponse.json({ success: true, data: enrichedCartItems });
     } else {
       return NextResponse.json({
         success: false,

@@ -1,15 +1,22 @@
 "use client";
 import React, { use, useEffect, useState } from "react";
-import { createCheckoutOnsite, createReservation, getProduct, createAppointment } from "@/app/actions";
+import {
+  createCheckoutOnsite,
+  createReservation,
+  getProduct,
+  createAppointment,
+  checkAvailability,
+  getBranchCalendarSettings,
+} from "@/app/actions";
 import { Product } from "@/hooks/useQuery";
 import Image from "next/image";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { 
-  ArrowLeft, 
-  Package, 
-  MapPin, 
-  Tag, 
-  ShoppingCart, 
+import {
+  ArrowLeft,
+  Package,
+  MapPin,
+  Tag,
+  ShoppingCart,
   Lock,
   CalendarDays,
   Truck,
@@ -18,7 +25,7 @@ import {
   Car,
   X,
   CreditCard,
-  Banknote
+  Banknote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +35,13 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 export default function VehicleDetail({
   params,
@@ -46,6 +59,9 @@ export default function VehicleDetail({
   const [pickupDate, setPickupDate] = useState("");
   const [pickupTime, setPickupTime] = useState("");
   const [branch, setBranch] = useState("");
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [closedDates, setClosedDates] = useState<string[]>([]);
   const { slug } = use(params);
 
   // console.log('🚀 PRODUCT PAGE COMPONENT LOADED - SLUG:', slug);
@@ -56,19 +72,53 @@ export default function VehicleDetail({
     async function fetchProduct() {
       const fetchedProduct = await getProduct(slug);
       const product = fetchedProduct.data;
+      console.log("Fetched product:", product);
       setProduct(product || null);
       setReservationFee((product?.price || 0) * 0.05);
       // Set branch from product location
-      setBranch(product?.location || "Albay");
+      setBranch(product?.location || "Camalig");
       // Use first image from images array, fallback to imageUrl
-      const initialImage = product?.images && product.images.length > 0 ? product.images[0] : product?.imageUrl || "";
+      const initialImage =
+        product?.images && product.images.length > 0
+          ? product.images[0]
+          : product?.imageUrl || "";
       setSelectedImage(initialImage);
       setCurrentImageIndex(0);
-      
+
       setInitialLoad(false);
     }
     fetchProduct();
   }, [slug]);
+
+  // Load closed dates when branch is set
+  useEffect(() => {
+    if (branch) {
+      getBranchCalendarSettings(branch).then((result) => {
+        if (result.success && result.data.closedDates) {
+          const dates = result.data.closedDates.map((cd: any) => cd.date);
+          setClosedDates(dates);
+        }
+      });
+    }
+  }, [branch]);
+
+  // Check availability when pickup date changes
+  useEffect(() => {
+    if (pickupDate && branch) {
+      setIsCheckingAvailability(true);
+      checkAvailability(branch, pickupDate)
+        .then((result) => {
+          if (result.success && result.data) {
+            setAvailableSlots(result.data.availableSlots);
+          } else {
+            setAvailableSlots([]);
+          }
+        })
+        .finally(() => {
+          setIsCheckingAvailability(false);
+        });
+    }
+  }, [pickupDate, branch]);
 
   const handleOpenModal = (type: "reserve" | "book") => {
     setModalType(type);
@@ -90,15 +140,26 @@ export default function VehicleDetail({
   const getTomorrowDate = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
+    return tomorrow.toISOString().split("T")[0];
+  };
+
+  // Check if a date is disabled (Sunday or closed date)
+  const isDateDisabled = (dateString: string) => {
+    const date = new Date(dateString);
+    // Check if Sunday (0 = Sunday)
+    if (date.getDay() === 0) return true;
+    // Check if in closed dates
+    if (closedDates.includes(dateString)) return true;
+    return false;
   };
 
   const handleNextImage = () => {
-    const allImages = product?.images && product.images.length > 0 
-      ? product.images 
-      : product?.imageUrl 
-      ? [product.imageUrl] 
-      : [];
+    const allImages =
+      product?.images && product.images.length > 0
+        ? product.images
+        : product?.imageUrl
+          ? [product.imageUrl]
+          : [];
     if (allImages.length > 0) {
       const nextIndex = (currentImageIndex + 1) % allImages.length;
       setCurrentImageIndex(nextIndex);
@@ -107,13 +168,15 @@ export default function VehicleDetail({
   };
 
   const handlePreviousImage = () => {
-    const allImages = product?.images && product.images.length > 0 
-      ? product.images 
-      : product?.imageUrl 
-      ? [product.imageUrl] 
-      : [];
+    const allImages =
+      product?.images && product.images.length > 0
+        ? product.images
+        : product?.imageUrl
+          ? [product.imageUrl]
+          : [];
     if (allImages.length > 0) {
-      const prevIndex = (currentImageIndex - 1 + allImages.length) % allImages.length;
+      const prevIndex =
+        (currentImageIndex - 1 + allImages.length) % allImages.length;
       setCurrentImageIndex(prevIndex);
       setSelectedImage(allImages[prevIndex]);
     }
@@ -129,7 +192,7 @@ export default function VehicleDetail({
     if (isSubmitting) return;
 
     const formData = new FormData(e.target as HTMLFormElement);
-    
+
     const firstName = formData.get("firstName") as string;
     const lastName = formData.get("lastName") as string;
     const email = formData.get("email") as string;
@@ -155,9 +218,11 @@ export default function VehicleDetail({
 
     // Validate phone number (Philippine format)
     const phoneRegex = /^(09|\+639)\d{9}$/;
-    const cleanedPhone = phone.replace(/[\s-]/g, '');
+    const cleanedPhone = phone.replace(/[\s-]/g, "");
     if (!phone || !phoneRegex.test(cleanedPhone)) {
-      alert("Please enter a valid Philippine mobile number (e.g., 09XX-XXX-XXXX).");
+      alert(
+        "Please enter a valid Philippine mobile number (e.g., 09XX-XXX-XXXX)."
+      );
       return;
     }
 
@@ -179,7 +244,7 @@ export default function VehicleDetail({
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
     selectedDate.setHours(0, 0, 0, 0);
-    
+
     if (selectedDate < tomorrow) {
       alert("Pickup date must be at least tomorrow or later.");
       return;
@@ -213,12 +278,12 @@ export default function VehicleDetail({
             code: slug,
             quantity: 1,
             amount: {
-              value: reservationFee
+              value: reservationFee,
             },
             totalAmount: {
-              value: reservationFee
-            }
-          }
+              value: reservationFee,
+            },
+          },
         ],
         toPay: reservationFee,
         productPrice: product?.price || 0,
@@ -226,7 +291,7 @@ export default function VehicleDetail({
         appointment,
         branch,
         paymentMethod: "online", // Reservations are always online payment
-        referenceNumber
+        referenceNumber,
       };
 
       if (modalType === "reserve") {
@@ -252,7 +317,7 @@ export default function VehicleDetail({
           branch,
           productId: slug,
           productName: product?.name || "",
-          status: "scheduled"
+          status: "scheduled",
         };
 
         const result = await createAppointment(appointmentData);
@@ -338,7 +403,8 @@ export default function VehicleDetail({
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbLink href={`/browse/${product.category}`}>
-                    {product.category?.charAt(0).toUpperCase() + product.category?.slice(1)}
+                    {product.category?.charAt(0).toUpperCase() +
+                      product.category?.slice(1)}
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -350,9 +416,9 @@ export default function VehicleDetail({
           </div>
 
           {/* Back Button */}
-          <Button 
-            variant="outline" 
-            onClick={() => history.back()} 
+          <Button
+            variant="outline"
+            onClick={() => history.back()}
             className="mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -366,7 +432,12 @@ export default function VehicleDetail({
                 <CardContent className="p-0">
                   <div className="aspect-square relative overflow-hidden group">
                     <Image
-                      src={selectedImage || (product.images && product.images.length > 0 ? product.images[0] : product.imageUrl)}
+                      src={
+                        selectedImage ||
+                        (product.images && product.images.length > 0
+                          ? product.images[0]
+                          : product.imageUrl)
+                      }
                       alt={product.name}
                       fill
                       className="object-cover transition-transform duration-300 hover:scale-105"
@@ -374,11 +445,12 @@ export default function VehicleDetail({
                     />
                     {/* Navigation Arrows */}
                     {(() => {
-                      const allImages = product.images && product.images.length > 0 
-                        ? product.images 
-                        : product.imageUrl 
-                        ? [product.imageUrl] 
-                        : [];
+                      const allImages =
+                        product.images && product.images.length > 0
+                          ? product.images
+                          : product.imageUrl
+                            ? [product.imageUrl]
+                            : [];
                       // console.log('🎯 ARROWS - allImages:', allImages, 'length:', allImages.length, 'will show?', allImages.length > 1);
                       return allImages.length > 1 ? (
                         <>
@@ -387,8 +459,18 @@ export default function VehicleDetail({
                             className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                             aria-label="Previous image"
                           >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <svg
+                              className="w-6 h-6"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 19l-7-7 7-7"
+                              />
                             </svg>
                           </button>
                           <button
@@ -396,8 +478,18 @@ export default function VehicleDetail({
                             className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                             aria-label="Next image"
                           >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            <svg
+                              className="w-6 h-6"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                              />
                             </svg>
                           </button>
                           {/* Image Counter */}
@@ -414,14 +506,15 @@ export default function VehicleDetail({
               {/* Image Gallery Thumbnails */}
               {(() => {
                 // Combine all available images
-                const allImages = product.images && product.images.length > 0 
-                  ? product.images 
-                  : product.imageUrl 
-                  ? [product.imageUrl] 
-                  : [];
-                
+                const allImages =
+                  product.images && product.images.length > 0
+                    ? product.images
+                    : product.imageUrl
+                      ? [product.imageUrl]
+                      : [];
+
                 // console.log('Gallery - All images:', allImages, 'Length:', allImages.length);
-                
+
                 return allImages.length > 1 ? (
                   <div className="relative">
                     <div className="overflow-x-auto pb-2">
@@ -431,7 +524,9 @@ export default function VehicleDetail({
                             key={index}
                             onClick={() => handleThumbnailClick(img, index)}
                             className={`aspect-square relative overflow-hidden rounded-lg border-2 transition-all shrink-0 w-20 h-20 ${
-                              currentImageIndex === index ? 'border-primary ring-2 ring-primary' : 'border-gray-200 hover:border-gray-300'
+                              currentImageIndex === index
+                                ? "border-primary ring-2 ring-primary"
+                                : "border-gray-200 hover:border-gray-300"
                             }`}
                           >
                             <Image
@@ -495,14 +590,15 @@ export default function VehicleDetail({
                 <h1 className="text-3xl font-bold tracking-tight mb-4">
                   {product.name}
                 </h1>
-                
+
                 <div className="flex items-center gap-4 mb-4">
                   <div className="text-3xl font-bold text-primary">
-                    ₱{typeof product.price === "number" 
-                      ? product.price.toLocaleString() 
+                    ₱
+                    {typeof product.price === "number"
+                      ? product.price.toLocaleString()
                       : "Price Unavailable"}
                   </div>
-                  <Badge 
+                  <Badge
                     variant={isOutOfStock ? "destructive" : "default"}
                     className="text-sm"
                   >
@@ -524,18 +620,24 @@ export default function VehicleDetail({
                       disabled={isOutOfStock}
                     >
                       <ShoppingCart className="h-5 w-5 mr-2" />
-                      {isOutOfStock ? "Out of Stock" : "Reserve Unit"}
+                      {isOutOfStock
+                        ? "Out of Stock"
+                        : product.category === "engine"
+                          ? "Reserve Engine"
+                          : "Reserve Vehicle"}
                     </Button>
-                    <Button
-                      variant="secondary"
-                      size="lg"
-                      className="w-full"
-                      onClick={() => handleOpenModal("book")}
-                      disabled={isOutOfStock}
-                    >
-                      <Car className="h-5 w-5 mr-2" />
-                      Book Test Drive
-                    </Button>
+                    {product.category !== "engine" && (
+                      <Button
+                        variant="secondary"
+                        size="lg"
+                        className="w-full"
+                        onClick={() => handleOpenModal("book")}
+                        disabled={isOutOfStock}
+                      >
+                        <Car className="h-5 w-5 mr-2" />
+                        Book Test Drive
+                      </Button>
+                    )}
                   </>
                 ) : (
                   <SignInButton mode="modal">
@@ -569,11 +671,15 @@ export default function VehicleDetail({
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Reservation Fee (5%)</span>
-                      <span className="font-medium">₱{reservationFee.toLocaleString()}</span>
+                      <span className="font-medium">
+                        ₱{reservationFee.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Balance on Claiming</span>
-                      <span className="font-medium">₱{(product.price - reservationFee).toLocaleString()}</span>
+                      <span className="font-medium">
+                        ₱{(product.price - reservationFee).toLocaleString()}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -588,7 +694,7 @@ export default function VehicleDetail({
                 <TabsTrigger value="description">Description</TabsTrigger>
                 <TabsTrigger value="specifications">Specifications</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="description" className="mt-6">
                 <Card className="py-6">
                   <CardHeader>
@@ -596,12 +702,13 @@ export default function VehicleDetail({
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                      {product.description || "No description available for this vehicle."}
+                      {product.description ||
+                        "No description available for this vehicle."}
                     </p>
                   </CardContent>
                 </Card>
               </TabsContent>
-              
+
               <TabsContent value="specifications" className="mt-6">
                 <Card className="py-6">
                   <CardHeader>
@@ -611,19 +718,27 @@ export default function VehicleDetail({
                     <div className="space-y-4">
                       <div className="flex justify-between py-2 border-b">
                         <span className="font-medium">Category</span>
-                        <span className="text-muted-foreground capitalize">{product.category}</span>
+                        <span className="text-muted-foreground capitalize">
+                          {product.category}
+                        </span>
                       </div>
                       <div className="flex justify-between py-2 border-b">
                         <span className="font-medium">Location</span>
-                        <span className="text-muted-foreground capitalize">{product.location}</span>
+                        <span className="text-muted-foreground capitalize">
+                          {product.location}
+                        </span>
                       </div>
                       <div className="flex justify-between py-2 border-b">
                         <span className="font-medium">Stock Quantity</span>
-                        <span className="text-muted-foreground">{product.quantity}</span>
+                        <span className="text-muted-foreground">
+                          {product.quantity}
+                        </span>
                       </div>
                       <div className="flex justify-between py-2">
                         <span className="font-medium">Reservation Fee</span>
-                        <span className="text-muted-foreground">5% of total price</span>
+                        <span className="text-muted-foreground">
+                          5% of total price
+                        </span>
                       </div>
                     </div>
                   </CardContent>
@@ -639,7 +754,9 @@ export default function VehicleDetail({
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[95vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b z-10 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                {modalType === "reserve" ? "Reserve Your Vehicle" : "Book a Test Drive"}
+                {modalType === "reserve"
+                  ? "Reserve Your Vehicle"
+                  : "Book a Test Drive"}
               </h2>
               <Button
                 variant="ghost"
@@ -651,7 +768,10 @@ export default function VehicleDetail({
               </Button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+            <form
+              onSubmit={handleFormSubmit}
+              className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8"
+            >
               {/* Contact Information */}
               <section className="space-y-4">
                 <h3 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -664,7 +784,10 @@ export default function VehicleDetail({
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                        <Label
+                          htmlFor="firstName"
+                          className="text-sm font-medium text-gray-700"
+                        >
                           First Name
                         </Label>
                         <Input
@@ -678,7 +801,10 @@ export default function VehicleDetail({
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                        <Label
+                          htmlFor="lastName"
+                          className="text-sm font-medium text-gray-700"
+                        >
                           Last Name
                         </Label>
                         <Input
@@ -694,14 +820,19 @@ export default function VehicleDetail({
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                      <Label
+                        htmlFor="email"
+                        className="text-sm font-medium text-gray-700"
+                      >
                         Email Address
                       </Label>
                       <Input
                         id="email"
                         name="email"
                         type="email"
-                        defaultValue={user?.primaryEmailAddress?.emailAddress ?? ""}
+                        defaultValue={
+                          user?.primaryEmailAddress?.emailAddress ?? ""
+                        }
                         placeholder="juan@email.com"
                         className="w-full"
                         required
@@ -709,7 +840,10 @@ export default function VehicleDetail({
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                      <Label
+                        htmlFor="phone"
+                        className="text-sm font-medium text-gray-700"
+                      >
                         Contact Number
                       </Label>
                       <Input
@@ -726,7 +860,10 @@ export default function VehicleDetail({
                   {/* Right Column - Schedule Details */}
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="branch" className="text-sm font-medium text-gray-700">
+                      <Label
+                        htmlFor="branch"
+                        className="text-sm font-medium text-gray-700"
+                      >
                         Pickup Location
                       </Label>
                       <Input
@@ -744,50 +881,115 @@ export default function VehicleDetail({
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="pickupDate" className="text-sm font-medium text-gray-700">
-                        {modalType === "reserve" ? "Pickup Date" : "Test Drive Date"}
+                      <Label
+                        htmlFor="pickupDate"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        {modalType === "reserve"
+                          ? "Pickup Date"
+                          : "Test Drive Date"}
                       </Label>
                       <Input
                         id="pickupDate"
                         type="date"
                         value={pickupDate}
-                        onChange={(e) => setPickupDate(e.target.value)}
+                        onChange={(e) => {
+                          const selectedDate = e.target.value;
+                          // Silently skip disabled dates
+                          if (isDateDisabled(selectedDate)) {
+                            return;
+                          }
+                          setPickupDate(selectedDate);
+                          setPickupTime(""); // Reset time when date changes
+                        }}
                         min={getTomorrowDate()}
                         className="w-full"
                         required
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        <span className="inline-flex items-center gap-1">
+                          <span className="inline-block w-2 h-2 bg-gray-300 rounded-full"></span>
+                          Sundays and closed dates are unavailable
+                        </span>
+                      </p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="pickupTime" className="text-sm font-medium text-gray-700">
-                        {modalType === "reserve" ? "Pickup Time" : "Test Drive Time"}
+                      <Label
+                        htmlFor="pickupTime"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        {modalType === "reserve"
+                          ? "Pickup Time"
+                          : "Test Drive Time"}
                       </Label>
                       <select
                         id="pickupTime"
                         value={pickupTime}
                         onChange={(e) => setPickupTime(e.target.value)}
                         className="w-full border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                        disabled={!pickupDate || isCheckingAvailability}
                         required
                       >
-                        <option value="">Choose a time...</option>
-                        {Array.from({ length: 37 }, (_, i) => {
-                          const hours = 8 + Math.floor(i / 4);
-                          const minutes = (i % 4) * 15;
-                          if (hours > 17 || (hours === 17 && minutes > 0)) return null;
-                          const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                          const displayTime = `${hours % 12 || 12}:${minutes.toString().padStart(2, '0')} ${hours < 12 ? 'AM' : 'PM'}`;
-                          return <option key={timeString} value={timeString}>{displayTime}</option>;
-                        })}
+                        <option value="">
+                          {isCheckingAvailability
+                            ? "Checking availability..."
+                            : !pickupDate
+                            ? "Select a date first"
+                            : "Choose a time..."}
+                        </option>
+                        {!isCheckingAvailability && pickupDate && (
+                          availableSlots.length > 0 ? (
+                            availableSlots.map((timeSlot) => {
+                              const [hours, minutes] = timeSlot.split(':').map(Number);
+                              const displayTime = `${hours % 12 || 12}:${minutes.toString().padStart(2, "0")} ${hours < 12 ? "AM" : "PM"}`;
+                              return (
+                                <option key={timeSlot} value={timeSlot}>
+                                  {displayTime}
+                                </option>
+                              );
+                            })
+                          ) : (
+                            <option value="" disabled>
+                              No available slots for this date
+                            </option>
+                          )
+                        )}
                       </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Business hours: 8:00 AM - 3:00 PM
+                      </p>
+                      <p className="text-xs text-amber-600 mt-1">
+                        ⚠️ Appointments have a 2-hour buffer to prevent double-booking
+                      </p>
                     </div>
                   </div>
                 </div>
+
+                {/* Test Drive Warning - Only for Book */}
+                {modalType === "book" && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mt-4">
+                    <ul className="text-xs sm:text-sm text-blue-900 space-y-1">
+                      <li>
+                        • Test drive appointments may be cancelled if the vehicle is reserved by another customer
+                      </li>
+                      <li>
+                        • Please arrive with 1 Hour Before or After scheduled time
+                      </li>
+                      <li>
+                        • A valid driver's license is required for the test drive
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </section>
 
               {/* Order Summary - Only for Reserve */}
               {modalType === "reserve" && (
                 <section className="space-y-4">
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-800">Order Summary</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                    Order Summary
+                  </h3>
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 sm:p-6 space-y-4">
                     <div className="flex items-start gap-4">
                       {product?.images && product.images.length > 0 ? (
@@ -801,17 +1003,23 @@ export default function VehicleDetail({
                         </div>
                       ) : null}
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{product?.name}</h4>
-                        <p className="text-xs sm:text-sm text-gray-600 capitalize">{product?.category}</p>
+                        <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
+                          {product?.name}
+                        </h4>
+                        <p className="text-xs sm:text-sm text-gray-600 capitalize">
+                          {product?.category}
+                        </p>
                       </div>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div className="space-y-2 text-sm sm:text-base">
                       <div className="flex justify-between text-gray-700">
                         <span>Full Price:</span>
-                        <span className="font-medium">₱{product?.price.toLocaleString()}</span>
+                        <span className="font-medium">
+                          ₱{product?.price.toLocaleString()}
+                        </span>
                       </div>
                       <div className="flex justify-between text-emerald-700 font-semibold">
                         <span>Reservation Fee (5%):</span>
@@ -819,7 +1027,9 @@ export default function VehicleDetail({
                       </div>
                       <div className="flex justify-between text-gray-600 text-xs sm:text-sm">
                         <span>Balance on Claiming:</span>
-                        <span>₱{(product!.price - reservationFee).toLocaleString()}</span>
+                        <span>
+                          ₱{(product!.price - reservationFee).toLocaleString()}
+                        </span>
                       </div>
                     </div>
 
@@ -827,10 +1037,20 @@ export default function VehicleDetail({
 
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
                       <ul className="text-xs sm:text-sm text-blue-900 space-y-1">
-                        <li>• A 5% reservation fee is required to secure your vehicle</li>
-                        <li>• The remaining balance will be due upon claiming</li>
+                        <li>
+                          • A 5% reservation fee is required to secure your
+                          vehicle
+                        </li>
+                        <li>
+                          • The remaining balance will be due upon claiming
+                        </li>
                         <li>• The reservation fee is non-refundable</li>
-                        <li>• Failure to claim within 1 week will result in forfeiture</li>
+                        <li>
+                          • Failure to claim within 1 week will result in
+                          forfeiture
+                        </li>
+                        <li>• Please bring a valid ID and your order confirmation for pickup
+                        </li>
                       </ul>
                     </div>
                   </div>

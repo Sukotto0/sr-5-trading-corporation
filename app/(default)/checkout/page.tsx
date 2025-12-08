@@ -6,7 +6,7 @@ import {
   CreditCardIcon,
   BanknotesIcon,
 } from "@heroicons/react/24/outline";
-import { getCartItems, createCheckoutOnsite } from "@/app/actions";
+import { getCartItems, createCheckoutOnsite, getBranchCalendarSettings } from "@/app/actions";
 import { useUser } from "@clerk/nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -20,6 +20,7 @@ type CartItem = {
   price: number;
   quantity: number;
   imageUrl: string;
+  location?: string;
 };
 
 export default function CheckoutPage() {
@@ -36,6 +37,8 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [closedDates, setClosedDates] = useState<string[]>([]);
+  const dateInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -59,6 +62,11 @@ export default function CheckoutPage() {
           }
           
           setCartItems(filteredItems || []);
+          
+          // Set branch from first item's location (all items should be from same location)
+          if (filteredItems.length > 0 && filteredItems[0].location) {
+            setBranch(filteredItems[0].location);
+          }
         }
         setLoading(false);
       });
@@ -73,6 +81,37 @@ export default function CheckoutPage() {
     }
   }, [user, searchParams]);
 
+  // Load closed dates when branch is set
+  useEffect(() => {
+    if (branch) {
+      getBranchCalendarSettings(branch).then((result) => {
+        if (result.success && result.data) {
+          console.log(result)
+          const dates = result.data.closedDates?.map((cd: any) => cd.date) || [];
+          setClosedDates(dates);
+        }
+      });
+    }
+  }, [branch]);
+
+  // Monitor date input changes and reject disabled dates
+  useEffect(() => {
+    const input = dateInputRef.current;
+    if (!input) return;
+
+    const handleChange = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      if (target.value && isDateDisabled(target.value)) {
+        alert("This date is unavailable. Please select a different date.");
+        target.value = "";
+        setPickupDate("");
+      }
+    };
+
+    input.addEventListener('change', handleChange);
+    return () => input.removeEventListener('change', handleChange);
+  }, [closedDates]);
+
   const subtotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -84,6 +123,16 @@ export default function CheckoutPage() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split('T')[0];
+  };
+
+  // Check if date is disabled (Sunday or closed date)
+  const isDateDisabled = (dateString: string) => {
+    const date = new Date(dateString + 'T00:00:00');
+    // Check if Sunday (0 = Sunday)
+    if (date.getDay() === 0) return true;
+    // Check if in closed dates
+    if (closedDates.includes(dateString)) return true;
+    return false;
   };
 
   const handleConfirm = async () => {
@@ -117,6 +166,12 @@ export default function CheckoutPage() {
     // Validate pickup date
     if (!pickupDate) {
       alert("Please select a pickup date.");
+      return;
+    }
+
+    // Check if date is disabled (Sunday or closed)
+    if (isDateDisabled(pickupDate)) {
+      alert("The selected date is not available. Please choose another date.");
       return;
     }
 
@@ -312,34 +367,51 @@ export default function CheckoutPage() {
               {/* Schedule Fields */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
                     Pickup Location
                   </label>
-                  <select
-                    value={branch}
-                    onChange={(e) => setBranch(e.target.value)}
-                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 bg-white"
-                    required
-                  >
-                    <option value="">Choose a branch...</option>
-                    <option value="Imus">Imus Branch</option>
-                    <option value="Bacoor">Bacoor Branch</option>
-                    <option value="Albay">Albay Branch</option>
-                  </select>
+                  <input
+                    type="text"
+                    value={branch ? `${branch} Branch` : "Loading..."}
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-800 bg-gray-50 cursor-not-allowed capitalize"
+                    readOnly
+                    disabled
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Products must be picked up at their designated location
+                  </p>
                 </div>
 
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Select Pickup Date
                   </label>
                   <input
                     type="date"
+                    ref={dateInputRef}
                     value={pickupDate}
-                    onChange={(e) => setPickupDate(e.target.value)}
+                    onChange={(e) => {
+                      const selectedDate = e.target.value;
+                      if (selectedDate && isDateDisabled(selectedDate)) {
+                        alert("This date is unavailable (Sunday or closed date). Please select a different date.");
+                        e.target.value = pickupDate || "";
+                        return;
+                      }
+                      setPickupDate(selectedDate);
+                    }}
                     min={getTomorrowDate()}
                     className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    <span className="inline-block w-2 h-2 rounded-full bg-gray-400 mr-1"></span>
+                    Avoid selecting Sundays and closed dates
+                  </p>
+                  {/* {closedDates.length > 0 && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      ⚠️ Closed: {closedDates.map(d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })).join(", ")}
+                    </p>
+                  )} */}
                 </div>
 
                 <div>
@@ -356,8 +428,8 @@ export default function CheckoutPage() {
                     {Array.from({ length: 37 }, (_, i) => {
                       const hours = 8 + Math.floor(i / 4);
                       const minutes = (i % 4) * 15;
-                      // Stop at 5:00 PM (17:00)
-                      if (hours > 17 || (hours === 17 && minutes > 0)) return null;
+                      // Stop at 3:00 PM (15:00)
+                      if (hours > 15 || (hours === 15 && minutes > 0)) return null;
                       const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
                       const displayTime = `${hours % 12 || 12}:${minutes.toString().padStart(2, '0')} ${hours < 12 ? 'AM' : 'PM'}`;
                       return <option key={timeString} value={timeString}>{displayTime}</option>;
@@ -454,14 +526,29 @@ export default function CheckoutPage() {
               <span>Subtotal</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
-            <div className="flex justify-between text-gray-700 border-b border-gray-200 pb-2">
+            {/* <div className="flex justify-between text-gray-700 border-b border-gray-200 pb-2">
               <span>Shipping</span>
               <span>Free</span>
-            </div>
+            </div> */}
             <div className="flex justify-between text-xl font-extrabold text-gray-900 pt-3">
               <span>Total</span>
               <span>{formatCurrency(total)}</span>
             </div>
+          </div>
+
+          {/* Important Notice */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+            <ul className="text-sm text-blue-900 space-y-1.5">
+              <li>
+                • All products must be claimed at the designated branch location
+              </li>
+              <li>
+                • Refunds are processed on-site only with a valid receipt (digital or printed)
+              </li>
+              <li>
+                • Please bring a valid ID and your order confirmation for pickup
+              </li>
+            </ul>
           </div>
 
           <div className="pt-6">
