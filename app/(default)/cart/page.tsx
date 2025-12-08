@@ -25,7 +25,9 @@ type CartItem = {
   price: number;
   quantity: number;
   imageUrl: string;
+  availableStock: number;
 };
+
 export default function ShoppingCart() {
   const { user } = useUser();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -49,7 +51,7 @@ export default function ShoppingCart() {
 
   const incrementQuantity = async (id: string) => {
     const item = cartItems.find(item => item._id === id);
-    if (item) {
+    if (item && item.quantity < item.availableStock) {
       const newQuantity = item.quantity + 1;
       try {
         const result = await updateCartItem(id, newQuantity);
@@ -65,6 +67,8 @@ export default function ShoppingCart() {
       } catch (error) {
         console.error('Error updating cart item:', error);
       }
+    } else if (item && item.quantity >= item.availableStock) {
+      alert(`Cannot exceed available stock (${item.availableStock} units available)`);
     }
   };
 
@@ -244,6 +248,9 @@ export default function ShoppingCart() {
                           <p className="text-sm text-muted-foreground mt-1">
                             {formatCurrency(item.price)} each
                           </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {item.availableStock} in stock
+                          </p>
                           
                           {/* Quantity Controls - Mobile */}
                           <div className="flex items-center space-x-2 mt-3 sm:hidden">
@@ -262,6 +269,7 @@ export default function ShoppingCart() {
                               variant="outline"
                               size="icon"
                               onClick={() => incrementQuantity(item._id)}
+                              disabled={item.quantity >= item.availableStock}
                             >
                               <Plus className="h-4 w-4" />
                             </Button>
@@ -296,6 +304,7 @@ export default function ShoppingCart() {
                           variant="outline"
                           size="icon"
                           onClick={() => incrementQuantity(item._id)}
+                          disabled={item.quantity >= item.availableStock}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>

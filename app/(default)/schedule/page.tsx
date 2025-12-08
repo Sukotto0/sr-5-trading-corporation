@@ -6,6 +6,8 @@ import {
   createAppointment,
   createReservation,
   getServices,
+  checkAvailability,
+  getBranchCalendarSettings,
 } from "@/app/actions";
 import { ClipLoader } from "react-spinners";
 import { useSearchParams } from "next/navigation";
@@ -20,9 +22,17 @@ type serviceOffering = {
 
 export default function ScheduleVisitForm() {
   return (
-    <Suspense>
-      <ScheduleVisitComponent />
-    </Suspense>
+    <>
+      <style jsx global>{`
+        /* Disable Sundays in date picker */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+          cursor: pointer;
+        }
+      `}</style>
+      <Suspense>
+        <ScheduleVisitComponent />
+      </Suspense>
+    </>
   );
 }
 
@@ -30,10 +40,13 @@ function ScheduleVisitComponent() {
   const { user } = useUser();
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [closedDates, setClosedDates] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || "",
-    surname: user?.lastName || "",
-    contactNumber: "",
+    lastName: user?.lastName || "",
+    phoneNumber: "",
     email: user?.primaryEmailAddress?.emailAddress || "",
     preferredDate: "",
     preferredTime: "",
@@ -58,12 +71,15 @@ function ScheduleVisitComponent() {
     []
   );
 
-  // Generate time options with 15-minute intervals
+  // Generate time options with 30-minute intervals (limited to 3pm)
   const getTimeOptions = () => {
     const times = [];
-    for (let hour = 8; hour <= 17; hour++) {
-      // 8 AM to 5 PM
+    for (let hour = 8; hour <= 15; hour++) {
+      // 8 AM to 3 PM
       for (let minute = 0; minute < 60; minute += 30) {
+        // Stop at 3:00 PM
+        if (hour === 15 && minute > 0) break;
+        
         const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
         const displayTime = new Date(
           `2000-01-01T${timeString}`
@@ -85,12 +101,52 @@ function ScheduleVisitComponent() {
     return tomorrow.toISOString().split("T")[0];
   };
 
+  // Check if a date is disabled (Sunday or closed date)
+  const isDateDisabled = (dateString: string) => {
+    const date = new Date(dateString);
+    // Check if Sunday (0 = Sunday)
+    if (date.getDay() === 0) return true;
+    // Check if in closed dates
+    if (closedDates.includes(dateString)) return true;
+    return false;
+  };
+
   const branchLocations = [
     "Select a Branch",
-    "Main Branch - Camalig",
-    "Bacoor Branch",
-    "Imus Branch",
+    "Camalig",
+    "Imus",
+    "Bacoor",
   ];
+
+  // Load closed dates when location changes
+  useEffect(() => {
+    if (formData.location && formData.location !== "Select a Branch") {
+      getBranchCalendarSettings(formData.location).then((result) => {
+        if (result.success && result.data.closedDates) {
+          const dates = result.data.closedDates.map((cd: any) => cd.date);
+          setClosedDates(dates);
+        }
+      });
+    }
+  }, [formData.location]);
+
+  // Check availability when date changes
+  useEffect(() => {
+    if (formData.preferredDate && formData.location && formData.location !== "Select a Branch") {
+      setIsCheckingAvailability(true);
+      checkAvailability(formData.location, formData.preferredDate)
+        .then((result) => {
+          if (result.success && result.data) {
+            setAvailableSlots(result.data.availableSlots);
+          } else {
+            setAvailableSlots([]);
+          }
+        })
+        .finally(() => {
+          setIsCheckingAvailability(false);
+        });
+    }
+  }, [formData.preferredDate, formData.location]);
 
   useEffect(() => {
     getServices().then((data) => {
@@ -119,8 +175,8 @@ function ScheduleVisitComponent() {
         // Reset the form
         setFormData({
           firstName: user?.firstName || "",
-          surname: user?.lastName || "",
-          contactNumber: "",
+          lastName: user?.lastName || "",
+          phoneNumber: "",
           email: user?.primaryEmailAddress?.emailAddress || "",
           preferredDate: "",
           preferredTime: "",
@@ -196,11 +252,11 @@ function ScheduleVisitComponent() {
                   type="text"
                   name="last-name"
                   id="last-name"
-                  value={formData.surname}
+                  value={formData.lastName}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      surname: e.target.value,
+                      lastName: e.target.value,
                     }))
                   }
                   autoComplete="family-name"
@@ -227,13 +283,13 @@ function ScheduleVisitComponent() {
                 </label>
                 <input
                   type="tel" // Use tel for phone number input
-                  name="contact-number"
-                  id="contact-number"
-                  value={formData.contactNumber}
+                  name="phone-number"
+                  id="phone-number"
+                  value={formData.phoneNumber}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      contactNumber: e.target.value,
+                      phoneNumber: e.target.value,
                     }))
                   }
                   autoComplete="tel"
@@ -351,7 +407,7 @@ function ScheduleVisitComponent() {
                 </div>
               </div>
 
-              {/* Preferred Date - Only future dates allowed */}
+              {/* Preferred Date - Only future dates allowed, no Sundays */}
               <div>
                 <label
                   htmlFor="preferred-date"
@@ -364,19 +420,31 @@ function ScheduleVisitComponent() {
                   name="preferred-date"
                   id="preferred-date"
                   value={formData.preferredDate}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const selectedDate = e.target.value;
+                    // Silently skip disabled dates
+                    if (isDateDisabled(selectedDate)) {
+                      return;
+                    }
                     setFormData((prev) => ({
                       ...prev,
-                      preferredDate: e.target.value,
-                    }))
-                  }
+                      preferredDate: selectedDate,
+                      preferredTime: "", // Reset time when date changes
+                    }));
+                  }}
                   className="block w-full border border-gray-300 rounded-xl shadow-sm py-3 px-4 text-gray-700 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm appearance-none transition duration-150"
                   min={getTomorrowDate()} // Only allows future dates (tomorrow and beyond)
                   required
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 bg-gray-300 rounded-full"></span>
+                    Sundays and closed dates are unavailable
+                  </span>
+                </p>
               </div>
 
-              {/* Preferred Time - 15 minute intervals */}
+              {/* Preferred Time - Only available slots */}
               <div>
                 <label
                   htmlFor="preferred-time"
@@ -396,15 +464,38 @@ function ScheduleVisitComponent() {
                       }))
                     }
                     className="block w-full border border-gray-300 rounded-xl shadow-sm py-3 pl-4 pr-10 text-gray-700 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm appearance-none transition duration-150"
-                    defaultValue=""
+                    disabled={!formData.preferredDate || isCheckingAvailability}
                     required
                   >
-                    <option value="">Select a time</option>
-                    {getTimeOptions().map((time) => (
-                      <option key={time.value} value={time.value}>
-                        {time.display}
-                      </option>
-                    ))}
+                    <option value="">
+                      {isCheckingAvailability
+                        ? "Checking availability..."
+                        : !formData.preferredDate
+                        ? "Select a date first"
+                        : "Select a time"}
+                    </option>
+                    {!isCheckingAvailability && formData.preferredDate && (
+                      availableSlots.length > 0 ? (
+                        availableSlots.map((timeSlot) => {
+                          const displayTime = new Date(
+                            `2000-01-01T${timeSlot}`
+                          ).toLocaleTimeString("en-US", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            hour12: true,
+                          });
+                          return (
+                            <option key={timeSlot} value={timeSlot}>
+                              {displayTime}
+                            </option>
+                          );
+                        })
+                      ) : (
+                        <option value="" disabled>
+                          No available slots for this date
+                        </option>
+                      )
+                    )}
                   </select>
                   <ChevronDownIcon
                     className="pointer-events-none absolute inset-y-0 right-0 h-full w-5 text-gray-400 mr-2"
@@ -412,7 +503,10 @@ function ScheduleVisitComponent() {
                   />
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  Business hours: 8:00 AM - 5:00 PM
+                  Business hours: 8:00 AM - 3:00 PM
+                </p>
+                <p className="mt-1 text-xs text-amber-600">
+                  ⚠️ Appointments have a 2-hour buffer to prevent double-booking
                 </p>
               </div>
             </div>

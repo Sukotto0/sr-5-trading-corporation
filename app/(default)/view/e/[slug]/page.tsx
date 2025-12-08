@@ -50,6 +50,7 @@ export default function ProductDetail({
     async function fetchProduct() {
       const fetchedProduct = await getProduct(slug);
       const product = fetchedProduct.data;
+      
       setProduct(product || null);
       
       // Initialize carousel with first image

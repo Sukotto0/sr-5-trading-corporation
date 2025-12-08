@@ -29,7 +29,7 @@ const DetailItem = ({ icon: Icon, label, value, isLink = false }: any) => (
     </div>
     <div className="flex items-center space-x-1">
       <span
-        className={`text-sm ${isLink ? "text-emerald-600 hover:text-emerald-700 font-semibold cursor-pointer" : "text-gray-900 font-medium"}`}
+        className={`text-sm capitalize ${isLink ? "text-emerald-600 hover:text-emerald-700 font-semibold cursor-pointer" : "text-gray-900 font-medium"}`}
       >
         {value}
       </span>
@@ -40,6 +40,7 @@ const DetailItem = ({ icon: Icon, label, value, isLink = false }: any) => (
 
 const SuccessfulPayments = (props: any) => {
   const searchParams = useSearchParams();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [transactionData, setTransactionData] = useState<any>({});
 
   useEffect(() => {
@@ -50,11 +51,12 @@ const SuccessfulPayments = (props: any) => {
       console.log("Transaction ID from URL:", id);
 
       // Example: Fetch transaction details based on the ID
-      getTransaction(id, "success").then((data) => {
+      getTransaction(id, "PAYMENT_SUCCESS").then((data) => {
         if (data && data.success && data.data) {
           const fetchedData = data.data;
           setTransactionData(fetchedData);
         }
+        setIsLoading(false);
       });
     }
   }, [searchParams]);
@@ -157,6 +159,57 @@ const SuccessfulPayments = (props: any) => {
     };
   }, []);
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 p-12">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-600"></div>
+            <h2 className="text-xl font-semibold text-gray-800">Loading Transaction...</h2>
+            <p className="text-sm text-gray-600">Please wait while we retrieve your payment details.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No transaction found
+  if (!isLoading && !transactionData._id) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 p-12">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="rounded-full bg-red-100 p-6">
+              <svg className="w-16 h-16 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Transaction Not Found</h2>
+            <p className="text-gray-600 max-w-md">
+              We couldn't find the transaction you're looking for. Please check your email for the receipt or contact support if you need assistance.
+            </p>
+            <div className="flex gap-3 mt-6">
+              <button
+                className="flex items-center justify-center bg-emerald-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:bg-emerald-700 transition duration-150"
+                onClick={() => (window.location.href = "/")}
+              >
+                <HouseIcon className="size-5 mr-2" />
+                Go to Homepage
+              </button>
+              <button
+                className="flex items-center justify-center bg-white text-gray-800 font-semibold py-3 px-6 rounded-xl border border-gray-300 shadow-md hover:bg-gray-100 transition duration-150"
+                onClick={() => (window.location.href = "/transactions")}
+              >
+                View Transactions
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-50 min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
@@ -234,6 +287,11 @@ const SuccessfulPayments = (props: any) => {
                       )
                     : ""
                 }
+              />
+              <DetailItem
+                icon={MapPin}
+                label="Pickup Location"
+                value={transactionData.branch || "Not specified"}
               />
               {/* Items List */}
               <div className="py-3 border-b border-gray-100">

@@ -246,8 +246,9 @@ export async function createReservation(formData: FormData) {
 
 // TODO: move type status to get official status on transaction
 export async function getTransaction(id: string, type?: string) {
+  const queryType = type ? `&type=${type}` : "";
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/getTransaction?id=${id}&type=${type}`,
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/getTransaction?id=${id}${queryType}`,
     { method: "GET" }
   );
 
@@ -395,6 +396,68 @@ export async function getAppointmentsByUser(userId: string) {
   } catch (error) {
     console.error("Error fetching appointments:", error);
     return [];
+  }
+}
+
+export async function cancelAppointment(appointmentId: string, userId: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/cancelAppointment`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ appointmentId, userId }),
+      }
+    );
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error cancelling appointment:", error);
+    return { success: false, error: "Failed to cancel appointment" };
+  }
+}
+
+export async function updateAppointmentStatus(appointmentId: string, status: string, markedByAdmin: boolean = false) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/updateAppointmentStatus`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ appointmentId, status, markedByAdmin }),
+      }
+    );
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error updating appointment status:", error);
+    return { success: false, error: "Failed to update appointment status" };
+  }
+}
+
+export async function autoCompleteAppointments() {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/autoCompleteAppointments`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error auto-completing appointments:", error);
+    return { success: false, error: "Failed to auto-complete appointments" };
   }
 }
 
@@ -861,3 +924,114 @@ export async function createCheckoutOnsite(data: any) {
 //   const responseData = await response.json();
 //   return responseData;
 // }
+
+// Branch Calendar Settings Actions
+export async function getBranchCalendarSettings(branch: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/branchCalendarSettings?branch=${encodeURIComponent(branch)}`,
+      {
+        method: "GET",
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching branch calendar settings:", error);
+    return { success: false, error: "Failed to fetch calendar settings" };
+  }
+}
+
+export async function updateBranchCalendarSettings(data: any) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/branchCalendarSettings`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating branch calendar settings:", error);
+    return { success: false, error: "Failed to update calendar settings" };
+  }
+}
+
+export async function addClosedDate(branch: string, closedDate: string, reason: string, adminUserId: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/branchCalendarSettings`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ branch, closedDate, reason, adminUserId }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error adding closed date:", error);
+    return { success: false, error: "Failed to add closed date" };
+  }
+}
+
+export async function removeClosedDate(branch: string, closedDate: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/branchCalendarSettings?branch=${encodeURIComponent(branch)}&closedDate=${closedDate}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error removing closed date:", error);
+    return { success: false, error: "Failed to remove closed date" };
+  }
+}
+
+export async function checkAvailability(branch: string, date: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/checkAvailability?branch=${encodeURIComponent(branch)}&date=${date}`,
+      {
+        method: "GET",
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error checking availability:", error);
+    return { success: false, error: "Failed to check availability" };
+  }
+}

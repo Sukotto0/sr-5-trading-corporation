@@ -9,7 +9,7 @@ const filtersData = [
     options: [
       { value: 'imus', label: 'Imus', checked: false },
       { value: 'bacoor', label: 'Bacoor', checked: false },
-      { value: 'albay', label: 'Albay', checked: false },
+      { value: 'camalig', label: 'Camalig', checked: false },
     ],
   },
   {

@@ -24,8 +24,19 @@ type Transaction = {
   lastName: string;
   email: string;
   phone: string;
-  productName: string;
-  productId: string;
+  productName?: string;
+  productId?: string;
+  items?: Array<{
+    name: string;
+    code: string;
+    quantity: number;
+    amount: {
+      value: number;
+    };
+    totalAmount: {
+      value: number;
+    };
+  }>;
   toPay: string;
   productPrice: string;
   appointment: string;
@@ -74,6 +85,13 @@ const getStatusTheme = (status: string) => {
         icon: XCircle,
         bgColor: "bg-gray-100",
         dotColor: "bg-gray-500",
+      };
+    case "confirmed":
+      return {
+        color: "text-emerald-600",
+        icon: CheckCircle,
+        bgColor: "bg-emerald-100",
+        dotColor: "bg-emerald-500",
       };
     default:
       return {
@@ -141,7 +159,38 @@ const TransactionDetailModal = ({ transaction, onClose }: any) => {
 
         {/* Details Body */}
         <div className="p-6 sm:p-8 divide-y divide-gray-100">
-          <DetailRow icon={Tag} label="Item" value={transaction.productName} />
+          {/* Items List */}
+          <div className="py-3 border-b border-gray-100">
+            <div className="flex items-center space-x-3 mb-3">
+              <Tag className="w-5 h-5 text-gray-400" />
+              <span className="text-sm font-medium text-gray-700">Items</span>
+            </div>
+            <div className="ml-8 space-y-2">
+              {transaction.items && transaction.items.length > 0 ? (
+                transaction.items.map((item: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex justify-between items-start text-sm py-2 border-b border-gray-50 last:border-b-0"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{item.name}</p>
+                      <p className="text-xs text-gray-500">
+                        Quantity: {item.quantity} ×{" "}
+                        {formatCurrency(item.amount.value)}
+                      </p>
+                    </div>
+                    <p className="font-semibold text-gray-900 ml-4">
+                      {formatCurrency(item.totalAmount.value)}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">
+                  {transaction.productName || "No items"}
+                </p>
+              )}
+            </div>
+          </div>
           <DetailRow icon={Info} label="Order ID" value={transaction._id} />
           <DetailRow
             icon={Calendar}
@@ -175,14 +224,22 @@ const TransactionDetailModal = ({ transaction, onClose }: any) => {
           >
             Close Details
           </button>
-          {transaction.status === "success" && (
-            <button
-              className="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition duration-150"
-              onClick={onClose}
-            >
-              View Receipt
-            </button>
-          )}
+          <button
+            className="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition duration-150"
+            onClick={() => {
+              let redirectUrl = '';
+              if (transaction.status === 'success' || transaction.status === 'confirmed') {
+                redirectUrl = `/payments/success?id=${transaction._id}`;
+              } else if (transaction.status === 'failed') {
+                redirectUrl = `/payments/failed?id=${transaction._id}`;
+              } else {
+                redirectUrl = `/payments/cancelled?id=${transaction._id}`;
+              }
+              window.location.href = redirectUrl;
+            }}
+          >
+            View Receipt
+          </button>
         </div>
       </div>
     </div>
@@ -209,26 +266,28 @@ const TransactionHistoryTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const { user } = useUser();
   useEffect(() => {
     if (user?.id) {
       setLoading(true);
       // Fetch transactions from API for the current user
-      getTransactionsByUser(user.id).then((data) => {
-        console.log("Fetched transactions:", data);
-        if (data && Array.isArray(data)) {
-          // Additional client-side filtering to ensure only current user's transactions
-          const userTransactions = data.filter((transaction: Transaction) => 
-            transaction.userId === user.id
-          );
-          setTransactions(userTransactions);
-        }
-        setLoading(false);
-      }).catch(() => {
-        setLoading(false);
-      });
+      getTransactionsByUser(user.id)
+        .then((data) => {
+          console.log("Fetched transactions:", data);
+          if (data && Array.isArray(data)) {
+            // Additional client-side filtering to ensure only current user's transactions
+            const userTransactions = data.filter(
+              (transaction: Transaction) => transaction.userId === user.id
+            );
+            setTransactions(userTransactions);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          setLoading(false);
+        });
     }
   }, [user]);
 
@@ -243,10 +302,13 @@ const TransactionHistoryTable = () => {
   };
 
   // Filter and sort transactions
-  const filteredTransactions = statusFilter === 'all' 
-    ? transactions 
-    : transactions.filter(tx => tx.status.toLowerCase() === statusFilter.toLowerCase());
-    
+  const filteredTransactions =
+    statusFilter === "all"
+      ? transactions
+      : transactions.filter(
+          (tx) => tx.status.toLowerCase() === statusFilter.toLowerCase()
+        );
+
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
     // Ensure we parse string dates to timestamps; fallback to 0 if missing/invalid
     const aTime = a.lastUpdated ? new Date(a.lastUpdated).getTime() : 0;
@@ -282,7 +344,9 @@ const TransactionHistoryTable = () => {
   }, [statusFilter]);
 
   // Get unique statuses for filter options
-  const uniqueStatuses = Array.from(new Set(transactions.map(tx => tx.status)));
+  const uniqueStatuses = Array.from(
+    new Set(transactions.map((tx) => tx.status))
+  );
 
   return (
     <div className="bg-white min-h-screen flex items-start justify-center">
@@ -298,18 +362,21 @@ const TransactionHistoryTable = () => {
                 </h1>
               </div>
               <p className="text-md text-gray-600">
-                View and manage details for all recent transactions on your account.
+                View and manage details for all recent transactions on your
+                account.
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">Filter by status:</span>
-              <select 
+              <span className="text-sm font-medium text-gray-700">
+                Filter by status:
+              </span>
+              <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 min-w-[120px]"
               >
                 <option value="all">All Status</option>
-                {uniqueStatuses.map(status => (
+                {uniqueStatuses.map((status) => (
                   <option key={status} value={status.toLowerCase()}>
                     {status.charAt(0).toUpperCase() + status.slice(1)}
                   </option>
@@ -330,168 +397,172 @@ const TransactionHistoryTable = () => {
               <div className="text-gray-500">No transactions found.</div>
             </div>
           ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Item / Order ID
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell"
-                >
-                  Date
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Amount
-                </th>
-                {/* <th
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Item / Order ID
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell"
+                  >
+                    Date
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Amount
+                  </th>
+                  {/* <th
                   scope="col"
                   className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
                 >
                   Payment Method
                 </th> */}
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Status
-                </th>
-                <th scope="col" className="relative px-6 py-3">
-                  <span className="sr-only">View</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {currentItems.map((tx) => {
-                const { color, dotColor } = getStatusTheme(tx.status);
-                const amountClass =
-                  tx.status === "Failed"
-                    ? "text-gray-500 line-through"
-                    : tx.status === "Refund"
-                      ? "text-blue-600"
-                      : "text-gray-900";
-
-                return (
-                  <tr
-                    key={tx._id}
-                    className="hover:bg-emerald-50/50 transition duration-150 cursor-pointer"
-                    onClick={() => openModal(tx)}
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    {/* Item / Order ID */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-gray-900">
-                        {tx.productName}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
-                        {tx._id}
-                      </div>
-                    </td>
+                    Status
+                  </th>
+                  <th scope="col" className="relative px-6 py-3">
+                    <span className="sr-only">View</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {currentItems.map((tx) => {
+                  const { color, dotColor } = getStatusTheme(tx.status);
+                  const amountClass =
+                    tx.status === "Failed"
+                      ? "text-gray-500 line-through"
+                      : tx.status === "Refund"
+                        ? "text-blue-600"
+                        : "text-gray-900";
 
-                    {/* Date (Hidden on XS Screens) */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                      {tx.lastUpdated
-                        ? new Date(tx.lastUpdated).toLocaleString()
-                        : 0}
-                    </td>
+                  return (
+                    <tr
+                      key={tx._id}
+                      className="hover:bg-emerald-50/50 transition duration-150 cursor-pointer"
+                      onClick={() => openModal(tx)}
+                    >
+                      {/* Item / Order ID */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-semibold text-gray-900">
+                          {tx.items && tx.items.length > 0
+                            ? tx.items.length === 1
+                              ? tx.items[0].name
+                              : `${tx.items.length} items`
+                            : tx.productName || "No items"}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {tx._id}
+                        </div>
+                      </td>
 
-                    {/* Amount */}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold">
-                      <span className={amountClass}>
-                        {formatCurrency(tx.toPay as unknown as number)}
-                      </span>
-                    </td>
+                      {/* Date (Hidden on XS Screens) */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                        {tx.lastUpdated
+                          ? new Date(tx.lastUpdated).toLocaleString()
+                          : 0}
+                      </td>
 
-                    {/* Payment Method (Hidden on small screens) */}
-                    {/* <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500 hidden md:table-cell">
+                      {/* Amount */}
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold">
+                        <span className={amountClass}>
+                          {formatCurrency(tx.toPay as unknown as number)}
+                        </span>
+                      </td>
+
+                      {/* Payment Method (Hidden on small screens) */}
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500 hidden md:table-cell">
                       {tx.paymentMethod}
                     </td> */}
 
-                    {/* Status */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
-                      <span
-                        className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${color.replace("text", "bg").replace("600", "100")}`}
-                      >
+                      {/* Status */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
                         <span
-                          className={`h-2 w-2 rounded-full mr-2 ${dotColor}`}
-                        ></span>
-                        {tx.status}
-                      </span>
-                    </td>
+                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${color.replace("text", "bg").replace("600", "100")}`}
+                        >
+                          <span
+                            className={`h-2 w-2 rounded-full mr-2 ${dotColor}`}
+                          ></span>
+                          {tx.status}
+                        </span>
+                      </td>
 
-                    {/* View Button */}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-emerald-600 hover:text-emerald-900 font-semibold transition duration-100">
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      {/* View Button */}
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button className="text-emerald-600 hover:text-emerald-900 font-semibold transition duration-100">
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
 
         {/* --- Footer / Pagination Area --- */}
         {!loading && totalItems > 0 && (
-        <div className="p-4 sm:p-6 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600 border-t border-gray-200">
-          <div className="flex items-center gap-4">
-            <span>
-              Showing {showingFrom} to {showingTo} of {totalItems} results
-            </span>
+          <div className="p-4 sm:p-6 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600 border-t border-gray-200">
+            <div className="flex items-center gap-4">
+              <span>
+                Showing {showingFrom} to {showingTo} of {totalItems} results
+              </span>
+              <div className="flex items-center gap-2">
+                <span>Show:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1); // Reset to first page when changing items per page
+                  }}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+                <span>per page</span>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
-              <span>Show:</span>
-              <select 
-                value={itemsPerPage}
-                onChange={(e) => {
-                  setItemsPerPage(Number(e.target.value));
-                  setCurrentPage(1); // Reset to first page when changing items per page
-                }}
-                className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              <button
+                onClick={goToPrevPage}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded font-semibold transition duration-150 ${
+                  currentPage === 1
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                }`}
               >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-              </select>
-              <span>per page</span>
+                Previous
+              </button>
+              <span className="px-2">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1 rounded font-semibold transition duration-150 ${
+                  currentPage === totalPages
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                }`}
+              >
+                Next
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={goToPrevPage}
-              disabled={currentPage === 1}
-              className={`px-3 py-1 rounded font-semibold transition duration-150 ${
-                currentPage === 1 
-                  ? 'text-gray-400 cursor-not-allowed' 
-                  : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'
-              }`}
-            >
-              Previous
-            </button>
-            <span className="px-2">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button 
-              onClick={goToNextPage}
-              disabled={currentPage === totalPages}
-              className={`px-3 py-1 rounded font-semibold transition duration-150 ${
-                currentPage === totalPages 
-                  ? 'text-gray-400 cursor-not-allowed' 
-                  : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'
-              }`}
-            >
-              Next
-            </button>
-          </div>
-        </div>
         )}
       </div>
 

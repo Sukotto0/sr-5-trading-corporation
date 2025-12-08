@@ -141,7 +141,7 @@ const AdminDashboard = () => {
   const [timelineFilter, setTimelineFilter] = useState<string>("upcoming");
 
   // Branch locations
-  const branchLocations = ["Imus", "Bacoor", "Albay"];
+  const branchLocations = ["Imus", "Bacoor", "Camalig"];
 
 
   // Update time every second
