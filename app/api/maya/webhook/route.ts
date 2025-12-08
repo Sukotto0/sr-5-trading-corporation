@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
       updatedAt,
     } = payload;
 
-    console.log(payload)
+    console.log(payload);
 
     // Validate that we have the reference number to identify the transaction
     if (!requestReferenceNumber) {
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
       paymentId,
       lastUpdated: new Date().toISOString(),
       webhookReceivedAt: new Date().toISOString(),
-      mayaStatus: status,
+      status,
     };
 
     // Map Maya payment status to our transaction status
@@ -63,36 +64,57 @@ export async function POST(request: NextRequest) {
       case "COMPLETED":
         updateData.status = "confirmed";
         updateData.paymentConfirmedAt = new Date().toISOString();
-        console.log(`Payment confirmed for transaction: ${requestReferenceNumber}`);
+        metadata.items.map(async (item: any) => {
+          await db.collection("inventory").updateOne(
+            { _id: new ObjectId(item.code) },
+            {
+              $inc: { quantity: -item.quantity },
+              $set: { lastUpdated: new Date().toISOString() },
+            }
+          );
+        });
+        console.log(
+          `Payment confirmed for transaction: ${requestReferenceNumber}`
+        );
         break;
 
       case "PAYMENT_FAILED":
       case "FAILED":
         updateData.status = "failed";
         updateData.paymentFailedAt = new Date().toISOString();
-        console.log(`Payment failed for transaction: ${requestReferenceNumber}`);
+        console.log(
+          `Payment failed for transaction: ${requestReferenceNumber}`
+        );
         break;
 
       case "PAYMENT_EXPIRED":
       case "EXPIRED":
         updateData.status = "expired";
         updateData.paymentExpiredAt = new Date().toISOString();
-        console.log(`Payment expired for transaction: ${requestReferenceNumber}`);
+        console.log(
+          `Payment expired for transaction: ${requestReferenceNumber}`
+        );
         break;
 
       case "FOR_AUTHENTICATION":
       case "AUTHENTICATING":
         updateData.status = "authenticating";
-        console.log(`Payment authenticating for transaction: ${requestReferenceNumber}`);
+        console.log(
+          `Payment authenticating for transaction: ${requestReferenceNumber}`
+        );
         break;
 
       case "PENDING":
         updateData.status = "pending";
-        console.log(`Payment pending for transaction: ${requestReferenceNumber}`);
+        console.log(
+          `Payment pending for transaction: ${requestReferenceNumber}`
+        );
         break;
 
       default:
-        console.log(`Unknown payment status: ${status} for transaction: ${requestReferenceNumber}`);
+        console.log(
+          `Unknown payment status: ${status} for transaction: ${requestReferenceNumber}`
+        );
         updateData.status = status.toLowerCase();
     }
 
@@ -102,15 +124,14 @@ export async function POST(request: NextRequest) {
     // Update the transaction in database
     const result = await db
       .collection("transactions")
-      .updateOne(
-        { _id: requestReferenceNumber },
-        { $set: updateData }
-      );
+      .updateOne({ _id: requestReferenceNumber }, { $set: updateData });
 
     if (result.modifiedCount === 0) {
       console.warn(`No changes made to transaction: ${requestReferenceNumber}`);
     } else {
-      console.log(`Transaction updated successfully: ${requestReferenceNumber}`);
+      console.log(
+        `Transaction updated successfully: ${requestReferenceNumber}`
+      );
     }
 
     // Return success response to Maya
@@ -125,7 +146,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error("Error processing Maya webhook:", error);
-    
+
     // Return error response but with 200 status to prevent Maya from retrying
     // (you may want to change this based on your needs)
     return NextResponse.json(
