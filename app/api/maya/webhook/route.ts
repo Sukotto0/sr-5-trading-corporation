@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       paymentId,
       lastUpdated: new Date().toISOString(),
       webhookReceivedAt: new Date().toISOString(),
-      status,
+      mayaStatus: status,
     };
 
     // Map Maya payment status to our transaction status
