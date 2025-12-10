@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
 import {
   ChartBarIcon,
   ChevronDownIcon,
@@ -33,8 +34,15 @@ type Transaction = {
   lastName: string;
   email: string;
   phone: string;
-  productName: string;
-  productId: string;
+  productName?: string;
+  productId?: string;
+  items?: Array<{
+    name: string;
+    code: string;
+    quantity: number;
+    amount: { value: number };
+    totalAmount: { value: number };
+  }>;
   toPay: string;
   productPrice: string;
   appointment: string;
@@ -43,6 +51,7 @@ type Transaction = {
   status: string;
   paymentId: string;
   userId: string;
+  branch?: string;
 };
 
 // --- Helper Functions ---
@@ -285,27 +294,55 @@ const TransactionModal = ({
           {/* Product Info */}
           <div>
             <h4 className="text-lg font-medium text-gray-900 mb-3">Product Information</h4>
-            <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Product Name</label>
-                  <p className="text-gray-900 font-medium">{transaction.productName}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Product ID</label>
-                  <p className="text-gray-900 text-sm">{transaction.productId}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Full Product Price</label>
-                  <p className="text-gray-900">₱{parseFloat(transaction.productPrice || '0').toFixed(2)}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Amount to Pay</label>
-                  <p className="text-lg font-bold text-green-600">₱{parseFloat(transaction.toPay || '0').toFixed(2)}</p>
-                </div>
-              </div>
+            <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+              {transaction.items && transaction.items.length > 0 ? (
+                <>
+                  <div className="space-y-2">
+                    {transaction.items.map((item, index) => (
+                      <div key={index} className="border-b border-gray-200 pb-2 last:border-b-0">
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="text-gray-900 font-medium">{item.name}</p>
+                          <p className="text-gray-900 font-semibold">₱{item.totalAmount.value.toFixed(2)}</p>
+                        </div>
+                        <div className="flex justify-between items-center text-sm text-gray-600">
+                          <span>Code: {item.code}</span>
+                          <span>Qty: {item.quantity} × ₱{item.amount.value.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t border-gray-300 pt-2 mt-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-700 font-medium">Total Amount:</span>
+                      <span className="text-lg font-bold text-green-600">₱{parseFloat(transaction.toPay || '0').toFixed(2)}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Fallback for old transactions without items array */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Product Name</label>
+                      <p className="text-gray-900 font-medium">{transaction.productName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Product ID</label>
+                      <p className="text-gray-900 text-sm">{transaction.productId || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Product Price</label>
+                      <p className="text-gray-900">₱{parseFloat(transaction.productPrice || '0').toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Amount to Pay</label>
+                      <p className="text-lg font-bold text-green-600">₱{parseFloat(transaction.toPay || '0').toFixed(2)}</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -346,6 +383,7 @@ const TransactionModal = ({
 };
 
 const Sales = () => {
+  const { user } = useUser();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -363,6 +401,11 @@ const Sales = () => {
     }) + " PHT"
   );
 
+  // Get admin role and assigned branch from user metadata
+  const adminRole = (user?.publicMetadata as any)?.adminRole;
+  const assignedBranch = (user?.publicMetadata as any)?.assignedBranch;
+  const isSuperAdmin = adminRole === 'superadmin';
+
   // Fetch transactions on component mount
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -370,7 +413,16 @@ const Sales = () => {
         const response = await getAllTransactions();
         if (response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
         }
-        setTransactions(response.success && Array.isArray(response.data) ? response.data : []);
+        let transactionsData = response.success && Array.isArray(response.data) ? response.data : [];
+        
+        // Filter by branch for regular admins
+        if (!isSuperAdmin && assignedBranch) {
+          transactionsData = transactionsData.filter((tx: Transaction) => 
+            tx.branch?.toLowerCase() === assignedBranch.toLowerCase()
+          );
+        }
+        
+        setTransactions(transactionsData);
       } catch (error) {
         console.error('Error fetching transactions:', error);
       } finally {
@@ -379,7 +431,7 @@ const Sales = () => {
     };
 
     fetchTransactions();
-  }, []);
+  }, [isSuperAdmin, assignedBranch]);
 
   // Calculate KPIs from real data
   const kpiData = React.useMemo(() => {

@@ -50,7 +50,7 @@ function ScheduleVisitComponent() {
     email: user?.primaryEmailAddress?.emailAddress || "",
     preferredDate: "",
     preferredTime: "",
-    location: "",
+    branch: "",
     purpose: "",
     details: "",
     userId: user?.id || "",
@@ -118,23 +118,23 @@ function ScheduleVisitComponent() {
     "Bacoor",
   ];
 
-  // Load closed dates when location changes
+  // Load closed dates when branch changes
   useEffect(() => {
-    if (formData.location && formData.location !== "Select a Branch") {
-      getBranchCalendarSettings(formData.location).then((result) => {
+    if (formData.branch && formData.branch !== "Select a Branch") {
+      getBranchCalendarSettings(formData.branch).then((result) => {
         if (result.success && result.data.closedDates) {
           const dates = result.data.closedDates.map((cd: any) => cd.date);
           setClosedDates(dates);
         }
       });
     }
-  }, [formData.location]);
+  }, [formData.branch]);
 
   // Check availability when date changes
   useEffect(() => {
-    if (formData.preferredDate && formData.location && formData.location !== "Select a Branch") {
+    if (formData.preferredDate && formData.branch && formData.branch !== "Select a Branch") {
       setIsCheckingAvailability(true);
-      checkAvailability(formData.location, formData.preferredDate)
+      checkAvailability(formData.branch, formData.preferredDate)
         .then((result) => {
           if (result.success && result.data) {
             setAvailableSlots(result.data.availableSlots);
@@ -146,7 +146,7 @@ function ScheduleVisitComponent() {
           setIsCheckingAvailability(false);
         });
     }
-  }, [formData.preferredDate, formData.location]);
+  }, [formData.preferredDate, formData.branch]);
 
   useEffect(() => {
     getServices().then((data) => {
@@ -180,7 +180,7 @@ function ScheduleVisitComponent() {
           email: user?.primaryEmailAddress?.emailAddress || "",
           preferredDate: "",
           preferredTime: "",
-          location: "",
+          branch: "",
           purpose: "",
           details: "",
           userId: user?.id || "",
@@ -339,13 +339,13 @@ function ScheduleVisitComponent() {
                 <div className="relative">
                   <select
                     id="location"
-                    name="location"
+                    name="branch"
                     className="block w-full border border-gray-300 rounded-xl shadow-sm py-3 pl-4 pr-10 text-gray-700 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm appearance-none transition duration-150"
-                    value={formData.location}
+                    value={formData.branch}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        location: e.target.value,
+                        branch: e.target.value,
                       }))
                     }
                     required

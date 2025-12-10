@@ -18,6 +18,29 @@ export async function POST(req: Request) {
     const client = await clientPromise;
     const db = client.db("main");
     
+    // Check for duplicate appointment
+    const duplicateQuery: any = {
+      preferredDate: sendData.preferredDate,
+      preferredTime: sendData.preferredTime,
+      purpose: sendData.purpose,
+      branch: sendData.branch
+    };
+    
+    // Only check productId if it exists
+    if (sendData.productId) {
+      duplicateQuery.productId = sendData.productId;
+    }
+    
+    const existingAppointment = await db.collection("appointments").findOne(duplicateQuery);
+    
+    if (existingAppointment) {
+      console.log("Duplicate appointment found:", duplicateQuery);
+      return NextResponse.json(
+        { success: false, error: "An appointment was already set for this date and time. Please choose a different date or time." },
+        { status: 409 }
+      );
+    }
+    
     // Add timestamps and ensure status exists
     const itemWithTimestamps = {
       ...sendData,

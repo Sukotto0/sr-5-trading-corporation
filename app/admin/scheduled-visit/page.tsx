@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import type { View, Event as RBCEvent } from "react-big-calendar";
 import moment from "moment";
@@ -21,7 +22,7 @@ interface Appointment {
   email: string;
   preferredDate: string;
   preferredTime: string;
-  location: string;
+  branch: string;
   purpose: string;
   details?: string;
   status?: string;
@@ -53,6 +54,7 @@ interface CombinedEvent {
   contactNumber?: string;
   date: string;
   time: string;
+  branch?: string;
   type: 'appointment' | 'transaction';
   purpose: string;
   notes?: string;
@@ -65,6 +67,7 @@ interface CombinedEvent {
 const localizer = momentLocalizer(moment);
 
 export default function AdminAppointmentsPage() {
+  const { user } = useUser();
   const [combinedEvents, setCombinedEvents] = useState<CombinedEvent[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<RBCEvent[]>([]);
   const [view, setView] = useState<View>("month");
@@ -73,6 +76,11 @@ export default function AdminAppointmentsPage() {
   const [timeFilter, setTimeFilter] = useState<string>("upcoming");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [completionFilter, setCompletionFilter] = useState<string>("all");
+
+  // Get admin role and assigned branch from user metadata
+  const adminRole = (user?.publicMetadata as any)?.adminRole;
+  const assignedBranch = (user?.publicMetadata as any)?.assignedBranch;
+  const isSuperAdmin = adminRole === 'superadmin';
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth < 640) {
@@ -88,7 +96,14 @@ export default function AdminAppointmentsPage() {
         await autoCompleteAppointments();
         
         const appointmentResult = await getAllAppointments();
-        const appointments = appointmentResult.success ? appointmentResult.data : [];
+        let appointments = appointmentResult.success ? appointmentResult.data : [];
+
+        // Filter by branch for regular admins
+        if (!isSuperAdmin && assignedBranch) {
+          appointments = appointments.filter((apt: Appointment) => 
+            apt.branch?.toLowerCase() === assignedBranch.toLowerCase()
+          );
+        }
 
         // Transform appointments
         const appointmentEvents: CombinedEvent[] = appointments.map((apt: Appointment) => ({
@@ -99,6 +114,7 @@ export default function AdminAppointmentsPage() {
           phoneNumber: apt.contactNumber || apt.phoneNumber,
           date: apt.preferredDate,
           time: apt.preferredTime,
+          branch: apt.branch,
           type: 'appointment' as const,
           purpose: apt.purpose,
           notes: apt.details,
@@ -138,7 +154,7 @@ export default function AdminAppointmentsPage() {
     }
 
     loadData();
-  }, []);
+  }, [isSuperAdmin, assignedBranch]);
 
   function handleSelectEvent(event: RBCEvent) {
     if (event.resource) {
@@ -349,6 +365,7 @@ export default function AdminAppointmentsPage() {
                   <th className="py-3 px-4 text-left border-b">Purpose</th>
                   <th className="py-3 px-4 text-left border-b">Customer Name</th>
                   <th className="py-3 px-4 text-left border-b">Phone</th>
+                  <th className="py-3 px-4 text-left border-b">Branch</th>
                   <th className="py-3 px-4 text-left border-b">Date & Time</th>
                   <th className="py-3 px-4 text-left border-b">Status</th>
                   <th className="py-3 px-4 text-left border-b">Action</th>
@@ -357,7 +374,7 @@ export default function AdminAppointmentsPage() {
               <tbody className="bg-white">
                 {filteredEvents.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-gray-500">
+                    <td colSpan={7} className="py-8 text-center text-gray-500">
                       No appointments found matching the filters
                     </td>
                   </tr>
@@ -375,6 +392,11 @@ export default function AdminAppointmentsPage() {
                       </td>
                       <td className="py-3 px-4 border-b text-gray-600">
                         {event.phoneNumber || event.contactNumber || 'N/A'}
+                      </td>
+                      <td className="py-3 px-4 border-b text-gray-600">
+                        <span className="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-medium capitalize">
+                          {event.branch || 'N/A'}
+                        </span>
                       </td>
                       <td className="py-3 px-4 border-b text-gray-600">
                         {moment(event.date + 'T' + event.time).format("MMM DD, YYYY h:mm A")}
@@ -473,6 +495,13 @@ export default function AdminAppointmentsPage() {
               )}
               
               <div>
+                <p className="text-sm font-medium text-gray-500">Branch</p>
+                <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium inline-block capitalize">
+                  {selectedEvent.branch || 'N/A'}
+                </span>
+              </div>
+              
+              <div>
                 <p className="text-sm font-medium text-gray-500">Scheduled Date & Time</p>
                 <p className="text-lg text-gray-900">
                   {moment(selectedEvent.date + 'T' + selectedEvent.time).format("LLLL")}
@@ -538,7 +567,14 @@ export default function AdminAppointmentsPage() {
                         setSelectedEvent(null);
                         // Reload appointments
                         const appointmentResult = await getAllAppointments();
-                        const appointments = appointmentResult.success ? appointmentResult.data : [];
+                        let appointments = appointmentResult.success ? appointmentResult.data : [];
+                        
+                        // Filter by branch for regular admins
+                        if (!isSuperAdmin && assignedBranch) {
+                          appointments = appointments.filter((apt: Appointment) => 
+                            apt.branch?.toLowerCase() === assignedBranch.toLowerCase()
+                          );
+                        }
                         
                         const appointmentEvents: CombinedEvent[] = appointments.map((apt: Appointment) => ({
                           _id: apt._id,
@@ -548,6 +584,7 @@ export default function AdminAppointmentsPage() {
                           phoneNumber: apt.contactNumber,
                           date: apt.preferredDate,
                           time: apt.preferredTime,
+                          branch: apt.branch,
                           type: 'appointment' as const,
                           purpose: apt.purpose,
                           notes: apt.details,

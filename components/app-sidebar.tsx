@@ -38,7 +38,7 @@ const data = {
       plan: "Enterprise",
     },
   ],
-  navMain: [
+  navSuperAdmin: [
     {
       title: "Dashboard",
       url: "/admin/dashboard",
@@ -80,10 +80,43 @@ const data = {
       ],
     },
   ],
+  navAdmin: [
+    {
+      title: "Dashboard",
+      url: "/admin/dashboard",
+      icon: SquareTerminal,
+    },
+    {
+      title: "Inventory",
+      url: "/admin/inventory",
+      icon: BoxesIcon,
+    },
+    {
+      title: "Sales",
+      url: "/admin/sales",
+      icon: ChartBarIcon,
+    },
+    {
+      title: "Schedules",
+      url: "/admin/scheduled-visit",
+      icon: TimerIcon,
+    },
+    {
+      title: "Feedback Records",
+      icon: MessageSquare,
+      url: "/admin/feedback",
+    },
+    {
+      title: "Users",
+      url: "/admin/users/user-management",
+      icon: UserCog2,
+    },
+  ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser();
+  console.log("Current User:", user?.publicMetadata);
 
   const userData = {
     name: user?.username || "User",
@@ -112,7 +145,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        {user?.publicMetadata.adminRole === "superadmin" ? (
+          <NavMain items={data.navSuperAdmin} />
+        ) : (
+          <NavMain items={data.navAdmin} />
+        )}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />
