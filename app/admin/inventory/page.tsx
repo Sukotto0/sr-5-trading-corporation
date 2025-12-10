@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import {
   MagnifyingGlassIcon,
   PlusIcon,
@@ -52,6 +53,7 @@ type InventoryItem = {
 
 // --- Component Definition ---
 const Inventory = () => {
+  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [inventoryData, setInventoryData] = useState<InventoryItem[]>([]);
   const [currentTime] = useState(
@@ -123,6 +125,13 @@ const Inventory = () => {
   }, []);
 
   const handleOpenModal = () => {
+    // Auto-set location for regular admins
+    if (!isSuperAdmin && assignedBranch) {
+      setFormData(prev => ({
+        ...prev,
+        location: assignedBranch.toLowerCase()
+      }));
+    }
     setIsModalOpen(true);
   };
 
@@ -484,8 +493,19 @@ const Inventory = () => {
     setPreviewImageIndex(index);
   };
 
+  // Get admin role and assigned branch from user metadata
+  const adminRole = (user?.publicMetadata as any)?.adminRole;
+  const assignedBranch = (user?.publicMetadata as any)?.assignedBranch;
+  const isSuperAdmin = adminRole === 'superadmin';
+
   // Filter the inventory data based on all filters
   const filteredInventory = inventoryData.filter((item) => {
+    // Branch filter for regular admins (superadmins see all)
+    if (!isSuperAdmin && assignedBranch) {
+      const matchesBranch = item.location.toLowerCase() === assignedBranch.toLowerCase();
+      if (!matchesBranch) return false;
+    }
+
     // Search filter (name or ID)
     const matchesSearch = 
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -867,6 +887,7 @@ const Inventory = () => {
               <Select
                 value={formData.location}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
+                disabled={!isSuperAdmin}
                 required
               >
                 <SelectTrigger>
@@ -875,9 +896,12 @@ const Inventory = () => {
                 <SelectContent>
                   <SelectItem value="bacoor">Bacoor</SelectItem>
                   <SelectItem value="imus">Imus</SelectItem>
-                  <SelectItem value="albay">Albay</SelectItem>
+                  <SelectItem value="camalig">Camalig</SelectItem>
                 </SelectContent>
               </Select>
+              {!isSuperAdmin && assignedBranch && (
+                <p className="text-xs text-muted-foreground">Location locked to your assigned branch</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -1044,6 +1068,7 @@ const Inventory = () => {
               <Select
                 value={editFormData.location}
                 onValueChange={(value) => setEditFormData(prev => ({ ...prev, location: value }))}
+                disabled={!isSuperAdmin}
                 required
               >
                 <SelectTrigger>
@@ -1052,9 +1077,12 @@ const Inventory = () => {
                 <SelectContent>
                   <SelectItem value="bacoor">Bacoor</SelectItem>
                   <SelectItem value="imus">Imus</SelectItem>
-                  <SelectItem value="albay">Albay</SelectItem>
+                  <SelectItem value="camalig">Camalig</SelectItem>
                 </SelectContent>
               </Select>
+              {!isSuperAdmin && assignedBranch && (
+                <p className="text-xs text-muted-foreground">Location locked to your assigned branch</p>
+              )}
             </div>
 
             <div className="space-y-2">

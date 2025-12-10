@@ -15,9 +15,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { getAllEvents, createEvent, updateEvent, deleteEvent } from "@/app/actions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  getAllEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+} from "@/app/actions";
+import { useUser } from "@clerk/nextjs";
 
 // --- Types ---
 type Event = {
@@ -109,6 +127,7 @@ const generateCalendarDays = (year: number, month: number) => {
 // --- Component Definition ---
 
 const AdminDashboard = () => {
+  const { user } = useUser();
   // Get current date
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -143,7 +162,6 @@ const AdminDashboard = () => {
   // Branch locations
   const branchLocations = ["Imus", "Bacoor", "Camalig"];
 
-
   // Update time every second
   // useEffect(() => {
   //   const updateTime = () => {
@@ -172,7 +190,7 @@ const AdminDashboard = () => {
       if (result.success) {
         setEvents(result.data);
       } else {
-        console.error('Failed to load events:', result.error);
+        console.error("Failed to load events:", result.error);
       }
     }
     loadEvents();
@@ -200,14 +218,13 @@ const AdminDashboard = () => {
   // Generate calendar days for current month
   const calendarDays = generateCalendarDays(currentYear, currentMonth);
 
-
   const handleDeleteEvent = async (eventId: string) => {
     const result = await deleteEvent(eventId);
     if (result.success) {
       setEvents(events.filter((event) => event._id !== eventId));
     } else {
-      console.error('Failed to delete event:', result.error);
-      alert('Failed to delete event. Please try again.');
+      console.error("Failed to delete event:", result.error);
+      alert("Failed to delete event. Please try again.");
     }
   };
 
@@ -237,15 +254,15 @@ const AdminDashboard = () => {
       // Update existing event
       const result = await updateEvent({ _id: editingEventId, ...eventData });
       if (result.success) {
-        setEvents((prev) => prev.map(event => 
-          event._id === editingEventId 
-            ? { ...event, ...eventData }
-            : event
-        ));
+        setEvents((prev) =>
+          prev.map((event) =>
+            event._id === editingEventId ? { ...event, ...eventData } : event
+          )
+        );
         handleCloseModal();
       } else {
-        console.error('Failed to update event:', result.error);
-        alert('Failed to update event. Please try again.');
+        console.error("Failed to update event:", result.error);
+        alert("Failed to update event. Please try again.");
       }
     } else {
       // Add new event
@@ -254,8 +271,8 @@ const AdminDashboard = () => {
         setEvents((prev) => [...prev, result.event]);
         handleCloseModal();
       } else {
-        console.error('Failed to create event:', result.error);
-        alert('Failed to create event. Please try again.');
+        console.error("Failed to create event:", result.error);
+        alert("Failed to create event. Please try again.");
       }
     }
   };
@@ -291,7 +308,7 @@ const AdminDashboard = () => {
 
     const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const eventsForDate = events.filter((event) => event.date === dateString);
-    
+
     setSelectedDate(dateString);
     setSelectedDateEvents(eventsForDate);
     setShowDateEventsModal(true);
@@ -318,53 +335,59 @@ const AdminDashboard = () => {
     const nextMonth = new Date(today);
     nextMonth.setMonth(nextMonth.getMonth() + 1);
 
-    return events.filter((event) => {
-      const eventDate = new Date(event.date + "T" + event.time);
-      const eventDateOnly = new Date(event.date);
-      
-      switch (timelineFilter) {
-        case "today":
-          const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-          const todayEnd = new Date(todayStart);
-          todayEnd.setDate(todayEnd.getDate() + 1);
-          return eventDate >= todayStart && eventDate < todayEnd;
-        case "week":
-          return eventDate >= now && eventDate <= nextWeek;
-        case "month":
-          return eventDate >= now && eventDate <= nextMonth;
-        case "all":
-          return true;
-        case "past":
-          return eventDate < now;
-        case "upcoming":
-        default:
-          return eventDate >= now;
-      }
-    })
-    .sort((a, b) => {
-      const dateA = new Date(a.date + "T" + a.time);
-      const dateB = new Date(b.date + "T" + b.time);
-      const createdA = new Date(a.createdAt);
-      const createdB = new Date(b.createdAt);
-      
-      if (timelineFilter === "past") {
-        // Past events: newest first
-        return dateB.getTime() - dateA.getTime();
-      } else if (timelineFilter === "today" || timelineFilter === "all") {
-        // Today and All: latest created first, then by event time
-        if (Math.abs(dateA.getTime() - dateB.getTime()) < 86400000) { // Same day
-          return createdB.getTime() - createdA.getTime();
+    return events
+      .filter((event) => {
+        const eventDate = new Date(event.date + "T" + event.time);
+        const eventDateOnly = new Date(event.date);
+
+        switch (timelineFilter) {
+          case "today":
+            const todayStart = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate()
+            );
+            const todayEnd = new Date(todayStart);
+            todayEnd.setDate(todayEnd.getDate() + 1);
+            return eventDate >= todayStart && eventDate < todayEnd;
+          case "week":
+            return eventDate >= now && eventDate <= nextWeek;
+          case "month":
+            return eventDate >= now && eventDate <= nextMonth;
+          case "all":
+            return true;
+          case "past":
+            return eventDate < now;
+          case "upcoming":
+          default:
+            return eventDate >= now;
         }
-        return dateA.getTime() - dateB.getTime();
-      } else {
-        // Other filters: earliest event first, but latest created first for same time
-        if (dateA.getTime() === dateB.getTime()) {
-          return createdB.getTime() - createdA.getTime();
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.date + "T" + a.time);
+        const dateB = new Date(b.date + "T" + b.time);
+        const createdA = new Date(a.createdAt);
+        const createdB = new Date(b.createdAt);
+
+        if (timelineFilter === "past") {
+          // Past events: newest first
+          return dateB.getTime() - dateA.getTime();
+        } else if (timelineFilter === "today" || timelineFilter === "all") {
+          // Today and All: latest created first, then by event time
+          if (Math.abs(dateA.getTime() - dateB.getTime()) < 86400000) {
+            // Same day
+            return createdB.getTime() - createdA.getTime();
+          }
+          return dateA.getTime() - dateB.getTime();
+        } else {
+          // Other filters: earliest event first, but latest created first for same time
+          if (dateA.getTime() === dateB.getTime()) {
+            return createdB.getTime() - createdA.getTime();
+          }
+          return dateA.getTime() - dateB.getTime();
         }
-        return dateA.getTime() - dateB.getTime();
-      }
-    })
-    .slice(0, timelineFilter === "all" ? 10 : 5); // Show more for "all" filter
+      })
+      .slice(0, timelineFilter === "all" ? 10 : 5); // Show more for "all" filter
   };
 
   const filteredEvents = getFilteredEvents();
@@ -403,8 +426,6 @@ const AdminDashboard = () => {
     </div>
   );
 
-
-
   // Calendar Body Component
   const CalendarBody = () => {
     const isToday = (day: number, isCurrentMonthDay: boolean) => {
@@ -433,7 +454,10 @@ const AdminDashboard = () => {
     return (
       <div className="grid grid-cols-7 text-white text-center text-sm font-medium h-full">
         {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-          <div key={day + i} className="py-3 text-white font-semibold text-sm border-b border-white/20">
+          <div
+            key={day + i}
+            className="py-3 text-white font-semibold text-sm border-b border-white/20"
+          >
             {day}
           </div>
         ))}
@@ -464,23 +488,25 @@ const AdminDashboard = () => {
               {/* Event indicators */}
               {hasEvent && (
                 <div className="flex gap-0.5 flex-wrap justify-center">
-                  {eventsOnDate
-                    .slice(0, 2)
-                    .map((event, eventIndex) => (
-                      <span
-                        key={event._id}
-                        className={classNames(
-                          "block w-1.5 h-1.5 rounded-full shadow-sm",
-                          isTodayDate ? "bg-yellow-900" : "bg-white shadow-md"
-                        )}
-                        title={event.title}
-                      ></span>
-                    ))}
+                  {eventsOnDate.slice(0, 2).map((event, eventIndex) => (
+                    <span
+                      key={event._id}
+                      className={classNames(
+                        "block w-1.5 h-1.5 rounded-full shadow-sm",
+                        isTodayDate ? "bg-yellow-900" : "bg-white shadow-md"
+                      )}
+                      title={event.title}
+                    ></span>
+                  ))}
                   {eventsOnDate.length > 2 && (
-                    <span className={classNames(
-                      "text-[9px] font-bold px-1",
-                      isTodayDate ? "text-yellow-900" : "text-white drop-shadow-sm"
-                    )}>
+                    <span
+                      className={classNames(
+                        "text-[9px] font-bold px-1",
+                        isTodayDate
+                          ? "text-yellow-900"
+                          : "text-white drop-shadow-sm"
+                      )}
+                    >
                       +{eventsOnDate.length - 2}
                     </span>
                   )}
@@ -522,7 +548,11 @@ const AdminDashboard = () => {
               <div className="flex justify-between items-center mb-2">
                 <div className="flex-1">
                   <h3 className="text-base font-bold">
-                    {timelineFilter === "upcoming" ? "UPCOMING EVENTS" : timelineOptions.find(opt => opt.value === timelineFilter)?.label.toUpperCase() || "EVENTS"}
+                    {timelineFilter === "upcoming"
+                      ? "UPCOMING EVENTS"
+                      : timelineOptions
+                          .find((opt) => opt.value === timelineFilter)
+                          ?.label.toUpperCase() || "EVENTS"}
                   </h3>
                   <p className="text-xs font-light opacity-80">
                     {today.toLocaleDateString("en-US", {
@@ -533,17 +563,22 @@ const AdminDashboard = () => {
                     })}
                   </p>
                 </div>
-                <Button
-                  onClick={() => setShowAddEventModal(true)}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-yellow-900 font-bold shrink-0"
-                >
-                  <PlusIcon className="w-4 h-4 mr-2" />
-                  Add New
-                </Button>
+                {user?.publicMetadata.adminRole === "superadmin" && (
+                  <Button
+                    onClick={() => setShowAddEventModal(true)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-yellow-900 font-bold shrink-0"
+                  >
+                    <PlusIcon className="w-4 h-4 mr-2" />
+                    Add New
+                  </Button>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium opacity-90">Filter:</span>
-                <Select value={timelineFilter} onValueChange={setTimelineFilter}>
+                <Select
+                  value={timelineFilter}
+                  onValueChange={setTimelineFilter}
+                >
                   <SelectTrigger className="w-32 h-7 bg-red-800/50 border-red-700 text-white text-xs">
                     <SelectValue />
                   </SelectTrigger>
@@ -604,8 +639,18 @@ const AdminDashboard = () => {
                               className="p-1 hover:bg-blue-100 rounded text-blue-600 transition-colors"
                               title="Edit Event"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
                               </svg>
                             </button>
                             <button
@@ -626,10 +671,16 @@ const AdminDashboard = () => {
                   <div>
                     <CalendarIcon className="w-10 h-10 text-gray-300 mx-auto mb-2" />
                     <p className="text-gray-400 font-medium text-sm">
-                      No {timelineFilter === "past" ? "past" : timelineFilter === "all" ? "" : timelineFilter} events
+                      No{" "}
+                      {timelineFilter === "past"
+                        ? "past"
+                        : timelineFilter === "all"
+                          ? ""
+                          : timelineFilter}{" "}
+                      events
                     </p>
                     <p className="text-gray-400 text-xs mt-1">
-                      {timelineFilter === "past" 
+                      {timelineFilter === "past"
                         ? "No past events to show"
                         : "Click + to add event"}
                     </p>
@@ -653,9 +704,13 @@ const AdminDashboard = () => {
       <Dialog open={showAddEventModal} onOpenChange={setShowAddEventModal}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{isEditMode ? 'Edit Event' : 'Add New Event'}</DialogTitle>
+            <DialogTitle>
+              {isEditMode ? "Edit Event" : "Add New Event"}
+            </DialogTitle>
             <DialogDescription>
-              {isEditMode ? 'Update the event details below.' : 'Create a new event for your calendar. Fill in the details below.'}
+              {isEditMode
+                ? "Update the event details below."
+                : "Create a new event for your calendar. Fill in the details below."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -678,7 +733,9 @@ const AdminDashboard = () => {
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("description", e.target.value)
+                }
                 className="col-span-3"
                 placeholder="Enter event description (optional)"
                 rows={3}
@@ -734,7 +791,7 @@ const AdminDashboard = () => {
               Cancel
             </Button>
             <Button onClick={handleAddEvent}>
-              {isEditMode ? 'Update Event' : 'Add Event'}
+              {isEditMode ? "Update Event" : "Add Event"}
             </Button>
           </div>
         </DialogContent>
@@ -744,10 +801,12 @@ const AdminDashboard = () => {
       <Dialog open={showDateEventsModal} onOpenChange={setShowDateEventsModal}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Events for {selectedDate && formatSelectedDate(selectedDate)}</DialogTitle>
+            <DialogTitle>
+              Events for {selectedDate && formatSelectedDate(selectedDate)}
+            </DialogTitle>
             <DialogDescription>
-              {selectedDateEvents.length > 0 
-                ? `${selectedDateEvents.length} event${selectedDateEvents.length === 1 ? '' : 's'} scheduled for this day`
+              {selectedDateEvents.length > 0
+                ? `${selectedDateEvents.length} event${selectedDateEvents.length === 1 ? "" : "s"} scheduled for this day`
                 : "No events scheduled for this day"}
             </DialogDescription>
           </DialogHeader>
@@ -799,14 +858,26 @@ const AdminDashboard = () => {
                               className="p-1 hover:bg-blue-100 rounded text-blue-600 transition-colors"
                               title="Edit Event"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
                               </svg>
                             </button>
                             <button
                               onClick={async () => {
                                 await handleDeleteEvent(event._id);
-                                setSelectedDateEvents(prev => prev.filter(e => e._id !== event._id));
+                                setSelectedDateEvents((prev) =>
+                                  prev.filter((e) => e._id !== event._id)
+                                );
                               }}
                               className="p-1 hover:bg-red-100 rounded text-red-600 transition-colors"
                               title="Delete Event"
@@ -827,14 +898,18 @@ const AdminDashboard = () => {
                     No events scheduled
                   </p>
                   <p className="text-gray-400 text-sm mt-1">
-                    Click the + button in the upcoming events section to add an event
+                    Click the + button in the upcoming events section to add an
+                    event
                   </p>
                 </div>
               </div>
             )}
           </div>
           <div className="flex justify-end pt-4 border-t">
-            <Button variant="outline" onClick={() => setShowDateEventsModal(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowDateEventsModal(false)}
+            >
               Close
             </Button>
           </div>

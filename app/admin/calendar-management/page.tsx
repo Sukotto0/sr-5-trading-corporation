@@ -38,7 +38,21 @@ export default function BranchCalendarManagementPage() {
   const [isAddingDate, setIsAddingDate] = useState<boolean>(false);
   const [applyToAllBranches, setApplyToAllBranches] = useState<boolean>(false);
 
-  const branches = ["Camalig", "Imus", "Bacoor"];
+  // Get admin role and assigned branch from user metadata
+  const adminRole = (user?.publicMetadata as any)?.adminRole;
+  const assignedBranch = (user?.publicMetadata as any)?.assignedBranch;
+  const isSuperAdmin = adminRole === 'superadmin';
+
+  const allBranches = ["Camalig", "Imus", "Bacoor"];
+  // Filter branches for regular admins to show only their assigned branch
+  const branches = isSuperAdmin ? allBranches : (assignedBranch ? [assignedBranch] : allBranches);
+
+  useEffect(() => {
+    // Set initial branch for regular admins
+    if (!isSuperAdmin && assignedBranch && selectedBranch !== assignedBranch) {
+      setSelectedBranch(assignedBranch);
+    }
+  }, [isSuperAdmin, assignedBranch]);
 
   useEffect(() => {
     loadSettings();
@@ -94,7 +108,7 @@ export default function BranchCalendarManagementPage() {
     try {
       if (applyToAllBranches) {
         // Add to all branches
-        const promises = branches.map((branch) =>
+        const promises = allBranches.map((branch) =>
           addClosedDate(
             branch,
             newClosedDate,
@@ -208,7 +222,8 @@ export default function BranchCalendarManagementPage() {
         <select
           value={selectedBranch}
           onChange={(e) => setSelectedBranch(e.target.value)}
-          className="w-full sm:w-64 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          disabled={!isSuperAdmin}
+          className="w-full sm:w-64 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
         >
           {branches.map((branch) => (
             <option key={branch} value={branch}>
@@ -216,6 +231,11 @@ export default function BranchCalendarManagementPage() {
             </option>
           ))}
         </select>
+        {!isSuperAdmin && (
+          <p className="text-xs text-gray-500 mt-2">
+            Branch locked to your assigned location
+          </p>
+        )}
       </div>
 
       {loading ? (
@@ -225,13 +245,12 @@ export default function BranchCalendarManagementPage() {
       ) : (
         <>
           {/* Business Hours Settings */}
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+          {/* <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Business Hours & Settings
             </h2>
 
             <div className="space-y-4">
-              {/* Business Hours */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -286,7 +305,6 @@ export default function BranchCalendarManagementPage() {
                 </div>
               </div>
 
-              {/* Buffer Time */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Buffer Time (minutes between appointments)
@@ -314,7 +332,6 @@ export default function BranchCalendarManagementPage() {
                 </p>
               </div>
 
-              {/* Sunday Setting */}
               <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <AlertCircle className="w-5 h-5 text-blue-600" />
                 <div>
@@ -334,7 +351,7 @@ export default function BranchCalendarManagementPage() {
                 Save Business Hours
               </button>
             </div>
-          </div>
+          </div> */}
 
           {/* Add Closed Date */}
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
