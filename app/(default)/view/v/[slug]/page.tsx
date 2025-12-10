@@ -327,7 +327,7 @@ export default function VehicleDetail({
           handleCloseModal();
           setIsSubmitting(false);
         } else {
-          alert("Failed to book test drive. Please try again.");
+          alert(result.error || "Failed to book test drive. Please try again.");
           setIsSubmitting(false);
         }
       }
