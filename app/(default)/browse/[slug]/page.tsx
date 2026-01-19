@@ -68,6 +68,7 @@ export default function Browse({
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [searchQuery, setSearchQuery] = useState("");
   const [showDevWarning, setShowDevWarning] = useState(true);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   // Fetch filters and products using React Query
   const {
@@ -90,11 +91,15 @@ export default function Browse({
     return products.filter((product) => product.quantity > 0);
   }, [products]);
 
+  const unavailableProducts = useMemo(() => {
+    return products.filter((product) => product.quantity <= 0);
+  }, [products]);
+
   // Handle filter changes
   const handleFilterChange = (
     filterId: string,
     optionValue: string,
-    checked: boolean
+    checked: boolean,
   ) => {
     setSelectedFilters((prev) => {
       if (checked) {
@@ -107,10 +112,6 @@ export default function Browse({
     });
   };
 
-  useEffect(() => {
-    console.log(products)
-  }, [products])
-  
   // Handle sort changes
   const handleSortChange = (sortValue: string) => {
     setCurrentSort(sortValue);
@@ -160,7 +161,7 @@ export default function Browse({
 
   // Get active filter count
   const activeFilterCount = Object.keys(selectedFilters).filter(
-    (key) => key !== "category"
+    (key) => key !== "category",
   ).length;
 
   if (filtersError || productsError) {
@@ -209,58 +210,62 @@ export default function Browse({
                 : `${products.length} products found`}
           </div>
 
-            <div className="flex flex-col gap-4">
-              {/* Search Bar */}
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  type="text"
-                  placeholder={`Search ${slug.replace("-", " ")} products...`}
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-10 pr-10 w-full"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={clearSearch}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+          <div className="flex flex-col gap-4">
+            {/* Search Bar */}
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                type="text"
+                placeholder={`Search ${slug.replace("-", " ")} products...`}
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-10 pr-10 w-full"
+              />
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Sort */}
+              <div className="flex items-center gap-2 flex-1">
+                <SortAsc className="h-4 w-4 shrink-0" />
+                <Select value={currentSort} onValueChange={handleSortChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="flex items-center gap-3">
-                {/* Sort */}
-                <div className="flex items-center gap-2 flex-1">
-                  <SortAsc className="h-4 w-4 shrink-0" />
-                  <Select value={currentSort} onValueChange={handleSortChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sortOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Mobile Filter Button */}
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="sm" className="lg:hidden shrink-0">
-                      <Filter className="h-4 w-4 mr-2" />
-                      Filters
-                      {activeFilterCount > 0 && (
-                        <Badge variant="secondary" className="ml-2">
-                          {activeFilterCount}
-                        </Badge>
-                      )}
-                    </Button>
-                  </SheetTrigger>
+              {/* Mobile Filter Button */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="lg:hidden shrink-0"
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {activeFilterCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
                 <SheetContent side="left" className="w-80 overflow-y-auto">
                   <SheetHeader>
                     <SheetTitle>Categories & Filters</SheetTitle>
@@ -271,7 +276,8 @@ export default function Browse({
                       <h3 className="font-medium text-sm">Categories</h3>
                       <nav className="space-y-1">
                         {productsCategory.map((category) => {
-                          const categorySlug = category.href.split('/browse/')[1];
+                          const categorySlug =
+                            category.href.split("/browse/")[1];
                           const isActive = categorySlug === slug;
                           return (
                             <Link
@@ -289,7 +295,7 @@ export default function Browse({
                         })}
                       </nav>
                     </div>
-                    
+
                     {/* Divider */}
                     <div className="border-t pt-4 space-y-6">
                       <div className="flex items-center justify-between mb-4">
@@ -325,85 +331,85 @@ export default function Browse({
                             <Label className="text-sm font-medium">
                               {section.name}
                             </Label>
-                          {section.type === "price-range" ? (
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="space-y-2">
-                                <Label
-                                  htmlFor={`min-price-mobile`}
-                                  className="text-sm"
-                                >
-                                  Min Price (₱)
-                                </Label>
-                                <Input
-                                  id={`min-price-mobile`}
-                                  type="number"
-                                  placeholder="0"
-                                  min="0"
-                                  value={priceRange.min}
-                                  onChange={(e) =>
-                                    handlePriceRangeChange(
-                                      "min",
-                                      e.target.value
-                                    )
-                                  }
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label
-                                  htmlFor={`max-price-mobile`}
-                                  className="text-sm"
-                                >
-                                  Max Price (₱)
-                                </Label>
-                                <Input
-                                  id={`max-price-mobile`}
-                                  type="number"
-                                  placeholder="No limit"
-                                  min="0"
-                                  value={priceRange.max}
-                                  onChange={(e) =>
-                                    handlePriceRangeChange(
-                                      "max",
-                                      e.target.value
-                                    )
-                                  }
-                                />
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="space-y-3">
-                              {section.options.map((option) => (
-                                <div
-                                  key={option.value}
-                                  className="flex items-center space-x-2"
-                                >
-                                  <Checkbox
-                                    id={`filter-mobile-${section.id}-${option.value}`}
-                                    checked={
-                                      selectedFilters[
-                                        section.id.toLowerCase() as keyof ProductsQueryParams
-                                      ] === option.value
-                                    }
-                                    onCheckedChange={(checked) =>
-                                      handleFilterChange(
-                                        section.id,
-                                        option.value,
-                                        checked as boolean
+                            {section.type === "price-range" ? (
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                  <Label
+                                    htmlFor={`min-price-mobile`}
+                                    className="text-sm"
+                                  >
+                                    Min Price (₱)
+                                  </Label>
+                                  <Input
+                                    id={`min-price-mobile`}
+                                    type="number"
+                                    placeholder="0"
+                                    min="0"
+                                    value={priceRange.min}
+                                    onChange={(e) =>
+                                      handlePriceRangeChange(
+                                        "min",
+                                        e.target.value,
                                       )
                                     }
                                   />
-                                  <Label
-                                    htmlFor={`filter-mobile-${section.id}-${option.value}`}
-                                    className="text-sm font-normal"
-                                  >
-                                    {option.label}
-                                  </Label>
                                 </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))
+                                <div className="space-y-2">
+                                  <Label
+                                    htmlFor={`max-price-mobile`}
+                                    className="text-sm"
+                                  >
+                                    Max Price (₱)
+                                  </Label>
+                                  <Input
+                                    id={`max-price-mobile`}
+                                    type="number"
+                                    placeholder="No limit"
+                                    min="0"
+                                    value={priceRange.max}
+                                    onChange={(e) =>
+                                      handlePriceRangeChange(
+                                        "max",
+                                        e.target.value,
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-3">
+                                {section.options.map((option) => (
+                                  <div
+                                    key={option.value}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <Checkbox
+                                      id={`filter-mobile-${section.id}-${option.value}`}
+                                      checked={
+                                        selectedFilters[
+                                          section.id.toLowerCase() as keyof ProductsQueryParams
+                                        ] === option.value
+                                      }
+                                      onCheckedChange={(checked) =>
+                                        handleFilterChange(
+                                          section.id,
+                                          option.value,
+                                          checked as boolean,
+                                        )
+                                      }
+                                    />
+                                    <Label
+                                      htmlFor={`filter-mobile-${section.id}-${option.value}`}
+                                      className="text-sm font-normal"
+                                    >
+                                      {option.label}
+                                    </Label>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))
                       )}
                     </div>
                   </div>
@@ -487,7 +493,7 @@ export default function Browse({
                                     onChange={(e) =>
                                       handlePriceRangeChange(
                                         "min",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                   />
@@ -508,7 +514,7 @@ export default function Browse({
                                     onChange={(e) =>
                                       handlePriceRangeChange(
                                         "max",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                   />
@@ -532,7 +538,7 @@ export default function Browse({
                                         handleFilterChange(
                                           section.id,
                                           option.value,
-                                          checked as boolean
+                                          checked as boolean,
                                         )
                                       }
                                     />
@@ -604,14 +610,41 @@ export default function Browse({
                         className="group"
                       >
                         <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg group-hover:scale-[1.02] h-full">
-                          <div className="aspect-square overflow-hidden">
-                            <Image
-                              src={product.imageUrl}
-                              alt={product.name}
-                              width={400}
-                              height={500}
-                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                            />
+                          <div className="aspect-square overflow-hidden bg-muted">
+                            {!product.imageUrl ||
+                            failedImages.has(product.id) ? (
+                              <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                                <div className="text-center">
+                                  <svg
+                                    className="mx-auto h-12 w-12 text-muted-foreground/50"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                    />
+                                  </svg>
+                                  <p className="mt-2 text-xs">No image</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <Image
+                                src={product.imageUrl}
+                                alt={product.name}
+                                width={400}
+                                height={500}
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                onError={() => {
+                                  setFailedImages((prev) =>
+                                    new Set(prev).add(product.id),
+                                  );
+                                }}
+                              />
+                            )}
                           </div>
                           <CardContent className="p-3 sm:p-4 flex flex-col justify-between flex-1">
                             <h3 className="font-medium line-clamp-2 mb-2 text-sm sm:text-base">
@@ -625,7 +658,10 @@ export default function Browse({
                                 <Badge variant="secondary" className="text-xs">
                                   {product.quantity} in stock
                                 </Badge>
-                                <Badge variant="outline" className="text-xs flex items-center gap-1 capitalize">
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs flex items-center gap-1 capitalize"
+                                >
                                   <MapPin className="h-3 w-3" />
                                   {product.branch}
                                 </Badge>
@@ -636,6 +672,94 @@ export default function Browse({
                       </Link>
                     ))}
                   </div>
+
+                  {unavailableProducts.length > 0 && (
+                    <div className="mt-10 flex flex-col gap-6">
+                    <hr className="border"/>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                      {unavailableProducts.map((product) => (
+                        <Link
+                          key={product.id}
+                          href={
+                            slug == "tools" || slug == "parts-accessories"
+                              ? `/view/e/${product.id}`
+                              : `/view/v/${product.id}`
+                          }
+                          className="group"
+                        >
+                          <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg group-hover:scale-[1.02] h-full">
+                            <div className="relative aspect-square overflow-hidden bg-muted">
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white font-bold z-20">
+                                <span className="-rotate-30 text-3xl">
+                                  Unavailable
+                                </span>
+                              </div>
+                              {!product.imageUrl ||
+                              failedImages.has(product.id) ? (
+                                <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                                  <div className="text-center">
+                                    <svg
+                                      className="mx-auto h-12 w-12 text-muted-foreground/50"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                      />
+                                    </svg>
+                                    <p className="mt-2 text-xs">No image</p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <Image
+                                  src={product.imageUrl}
+                                  alt={product.name}
+                                  width={400}
+                                  height={500}
+                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                  onError={() => {
+                                    setFailedImages((prev) =>
+                                      new Set(prev).add(product.id),
+                                    );
+                                  }}
+                                />
+                              )}
+                            </div>
+                            <CardContent className="p-3 sm:p-4 flex flex-col justify-between flex-1">
+                              <h3 className="font-medium line-clamp-2 mb-2 text-sm sm:text-base">
+                                {product.name}
+                              </h3>
+                              <div className="space-y-2">
+                                <p className="text-lg sm:text-2xl font-bold text-primary">
+                                  ₱{Number(product.price).toLocaleString()}
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                  <Badge
+                                    variant="destructive"
+                                    className="text-xs"
+                                  >
+                                    Out of stock
+                                  </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs flex items-center gap-1 capitalize"
+                                  >
+                                    <MapPin className="h-3 w-3" />
+                                    {product.branch}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      ))}
+                    </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>

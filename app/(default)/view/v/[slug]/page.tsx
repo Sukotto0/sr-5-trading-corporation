@@ -62,9 +62,8 @@ export default function VehicleDetail({
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [closedDates, setClosedDates] = useState<string[]>([]);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const { slug } = use(params);
-
-  // console.log('🚀 PRODUCT PAGE COMPONENT LOADED - SLUG:', slug);
 
   const { isSignedIn, user } = useUser();
 
@@ -72,7 +71,6 @@ export default function VehicleDetail({
     async function fetchProduct() {
       const fetchedProduct = await getProduct(slug);
       const product = fetchedProduct.data;
-      console.log("Fetched product:", product);
       setProduct(product || null);
       setReservationFee((product?.price || 0) * 0.05);
       // Set branch from product location
@@ -141,6 +139,13 @@ export default function VehicleDetail({
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split("T")[0];
+  };
+
+  // Get max date (1 month from now)
+  const getMaxDate = () => {
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 1);
+    return maxDate.toISOString().split("T")[0];
   };
 
   // Check if a date is disabled (Sunday or closed date)
@@ -221,7 +226,7 @@ export default function VehicleDetail({
     const cleanedPhone = phone.replace(/[\s-]/g, "");
     if (!phone || !phoneRegex.test(cleanedPhone)) {
       alert(
-        "Please enter a valid Philippine mobile number (e.g., 09XX-XXX-XXXX)."
+        "Please enter a valid Philippine mobile number (e.g., 09XX-XXX-XXXX).",
       );
       return;
     }
@@ -430,19 +435,45 @@ export default function VehicleDetail({
             <div className="space-y-4">
               <Card className="overflow-hidden">
                 <CardContent className="p-0">
-                  <div className="aspect-square relative overflow-hidden group">
-                    <Image
-                      src={
-                        selectedImage ||
+                  <div className="aspect-square relative overflow-hidden group bg-muted">
+                    {(() => {
+                      const imageUrl = selectedImage ||
                         (product.images && product.images.length > 0
                           ? product.images[0]
-                          : product.imageUrl)
-                      }
-                      alt={product.name}
-                      fill
-                      className="object-cover transition-transform duration-300 hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                    />
+                          : product.imageUrl);
+                      
+                      return !imageUrl || failedImages.has(imageUrl) ? (
+                        <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                          <div className="text-center">
+                            <svg
+                              className="mx-auto h-16 w-16 text-muted-foreground/50"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                            <p className="mt-2 text-sm">No image available</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <Image
+                          src={imageUrl}
+                          alt={product.name}
+                          fill
+                          className="object-cover transition-transform duration-300 hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          onError={() => {
+                            setFailedImages(prev => new Set(prev).add(imageUrl));
+                          }}
+                        />
+                      );
+                    })()}
                     {/* Navigation Arrows */}
                     {(() => {
                       const allImages =
@@ -451,7 +482,6 @@ export default function VehicleDetail({
                           : product.imageUrl
                             ? [product.imageUrl]
                             : [];
-                      // console.log('🎯 ARROWS - allImages:', allImages, 'length:', allImages.length, 'will show?', allImages.length > 1);
                       return allImages.length > 1 ? (
                         <>
                           <button
@@ -513,8 +543,6 @@ export default function VehicleDetail({
                       ? [product.imageUrl]
                       : [];
 
-                // console.log('Gallery - All images:', allImages, 'Length:', allImages.length);
-
                 return allImages.length > 1 ? (
                   <div className="relative">
                     <div className="overflow-x-auto pb-2">
@@ -523,19 +551,40 @@ export default function VehicleDetail({
                           <button
                             key={index}
                             onClick={() => handleThumbnailClick(img, index)}
-                            className={`aspect-square relative overflow-hidden rounded-lg border-2 transition-all shrink-0 w-20 h-20 ${
+                            className={`aspect-square relative overflow-hidden rounded-lg border-2 transition-all shrink-0 w-20 h-20 bg-muted ${
                               currentImageIndex === index
                                 ? "border-primary ring-2 ring-primary"
                                 : "border-gray-200 hover:border-gray-300"
                             }`}
                           >
-                            <Image
-                              src={img}
-                              alt={`Image ${index + 1}`}
-                              fill
-                              className="object-cover"
-                              sizes="80px"
-                            />
+                            {!img || failedImages.has(img) ? (
+                              <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                                <svg
+                                  className="h-6 w-6 text-muted-foreground/50"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              </div>
+                            ) : (
+                              <Image
+                                src={img}
+                                alt={`Image ${index + 1}`}
+                                fill
+                                className="object-cover"
+                                sizes="80px"
+                                onError={() => {
+                                  setFailedImages(prev => new Set(prev).add(img));
+                                }}
+                              />
+                            )}
                           </button>
                         ))}
                       </div>
@@ -903,6 +952,7 @@ export default function VehicleDetail({
                           setPickupTime(""); // Reset time when date changes
                         }}
                         min={getTomorrowDate()}
+                        max={getMaxDate()}
                         className="w-full"
                         required
                       />
@@ -935,13 +985,16 @@ export default function VehicleDetail({
                           {isCheckingAvailability
                             ? "Checking availability..."
                             : !pickupDate
-                            ? "Select a date first"
-                            : "Choose a time..."}
+                              ? "Select a date first"
+                              : "Choose a time..."}
                         </option>
-                        {!isCheckingAvailability && pickupDate && (
-                          availableSlots.length > 0 ? (
+                        {!isCheckingAvailability &&
+                          pickupDate &&
+                          (availableSlots.length > 0 ? (
                             availableSlots.map((timeSlot) => {
-                              const [hours, minutes] = timeSlot.split(':').map(Number);
+                              const [hours, minutes] = timeSlot
+                                .split(":")
+                                .map(Number);
                               const displayTime = `${hours % 12 || 12}:${minutes.toString().padStart(2, "0")} ${hours < 12 ? "AM" : "PM"}`;
                               return (
                                 <option key={timeSlot} value={timeSlot}>
@@ -953,14 +1006,14 @@ export default function VehicleDetail({
                             <option value="" disabled>
                               No available slots for this date
                             </option>
-                          )
-                        )}
+                          ))}
                       </select>
                       <p className="text-xs text-gray-500 mt-1">
                         Business hours: 8:00 AM - 3:00 PM
                       </p>
                       <p className="text-xs text-amber-600 mt-1">
-                        ⚠️ Appointments have a 2-hour buffer to prevent double-booking
+                        ⚠️ Appointments have a 2-hour buffer to prevent
+                        double-booking
                       </p>
                     </div>
                   </div>
@@ -971,13 +1024,16 @@ export default function VehicleDetail({
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mt-4">
                     <ul className="text-xs sm:text-sm text-blue-900 space-y-1">
                       <li>
-                        • Test drive appointments may be cancelled if the vehicle is reserved by another customer
+                        • Test drive appointments may be cancelled if the
+                        vehicle is reserved by another customer
                       </li>
                       <li>
-                        • Please arrive with 1 Hour Before or After scheduled time
+                        • Please arrive with 1 Hour Before or After scheduled
+                        time
                       </li>
                       <li>
-                        • A valid driver's license is required for the test drive
+                        • A valid driver's license is required for the test
+                        drive
                       </li>
                     </ul>
                   </div>
@@ -993,13 +1049,34 @@ export default function VehicleDetail({
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 sm:p-6 space-y-4">
                     <div className="flex items-start gap-4">
                       {product?.images && product.images.length > 0 ? (
-                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border border-gray-200 shrink-0">
-                          <Image
-                            src={product.images[0]}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                          />
+                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border border-gray-200 shrink-0 bg-muted">
+                          {!product.images[0] || failedImages.has(product.images[0]) ? (
+                            <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                              <svg
+                                className="h-8 w-8 text-muted-foreground/50"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                              </svg>
+                            </div>
+                          ) : (
+                            <Image
+                              src={product.images[0]}
+                              alt={product.name}
+                              fill
+                              className="object-cover"
+                              onError={() => {
+                                setFailedImages(prev => new Set(prev).add(product.images![0]));
+                              }}
+                            />
+                          )}
                         </div>
                       ) : null}
                       <div className="flex-1 min-w-0">
@@ -1049,7 +1126,9 @@ export default function VehicleDetail({
                           • Failure to claim within 1 week will result in
                           forfeiture
                         </li>
-                        <li>• Please bring a valid ID and your order confirmation for pickup
+                        <li>
+                          • Please bring a valid ID and your order confirmation
+                          for pickup
                         </li>
                       </ul>
                     </div>

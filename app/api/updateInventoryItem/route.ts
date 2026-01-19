@@ -1,17 +1,13 @@
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
-import { send } from "process";
 
 export async function PATCH(req: Request) {
-  console.log("Updating product...");
   const sendData = await req.json();
   try {
     const client = await clientPromise;
     const db = client.db("main");
     const { productId, data } = sendData;
-
-    console.log("Product ID:", productId, "Update Data:", data);
 
     // Add updated timestamp to the update data
     const updateDataWithTimestamp = {
@@ -19,7 +15,6 @@ export async function PATCH(req: Request) {
       lastUpdated: new Date().toISOString(),
     };
 
-    console.log(updateDataWithTimestamp);
     const updateData = await db
       .collection("inventory")
       .updateOne(
@@ -27,7 +22,6 @@ export async function PATCH(req: Request) {
         { $set: updateDataWithTimestamp }
       );
 
-    console.log("Update result:", updateData);
     return NextResponse.json({ success: true, updateData }, { status: 200 });
   } catch (error) {
     console.error("Error updating product:", error);

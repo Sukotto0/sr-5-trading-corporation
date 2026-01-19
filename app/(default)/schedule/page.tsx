@@ -101,6 +101,13 @@ function ScheduleVisitComponent() {
     return tomorrow.toISOString().split("T")[0];
   };
 
+  // Get max date (1 month from now)
+  const getMaxDate = () => {
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 1);
+    return maxDate.toISOString().split("T")[0];
+  };
+
   // Check if a date is disabled (Sunday or closed date)
   const isDateDisabled = (dateString: string) => {
     const date = new Date(dateString);
@@ -434,6 +441,7 @@ function ScheduleVisitComponent() {
                   }}
                   className="block w-full border border-gray-300 rounded-xl shadow-sm py-3 px-4 text-gray-700 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm appearance-none transition duration-150"
                   min={getTomorrowDate()} // Only allows future dates (tomorrow and beyond)
+                  max={getMaxDate()}
                   required
                 />
                 <p className="mt-1 text-xs text-gray-500">
