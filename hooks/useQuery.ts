@@ -15,7 +15,7 @@ export interface Filter {
 }
 
 export interface Product {
-  id: number | string;
+  id: string;
   name: string;
   imageUrl: string;
   price: number;

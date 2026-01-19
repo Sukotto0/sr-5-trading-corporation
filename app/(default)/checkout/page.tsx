@@ -125,6 +125,13 @@ export default function CheckoutPage() {
     return tomorrow.toISOString().split('T')[0];
   };
 
+  // Get max date (1 month from now)
+  const getMaxDate = () => {
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 2);
+    return maxDate.toISOString().split('T')[0];
+  };
+
   // Check if date is disabled (Sunday or closed date)
   const isDateDisabled = (dateString: string) => {
     const date = new Date(dateString + 'T00:00:00');
@@ -400,6 +407,7 @@ export default function CheckoutPage() {
                       setPickupDate(selectedDate);
                     }}
                     min={getTomorrowDate()}
+                    max={getMaxDate()}
                     className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500"
                     required
                   />
